@@ -55,7 +55,7 @@ export function StaffFormModal({
         name: staff?.name ?? '',
         email: staff?.email ?? '',
         role: staff?.role ?? 'manager',
-        password: staff?.password ?? generatePassword(),
+        password: staff ? '' : generatePassword(),
       });
     }
   }, [open, staff, reset]);
@@ -63,7 +63,10 @@ export function StaffFormModal({
   const onSubmit = async (values: StaffFormValues) => {
     try {
       if (staff) {
-        await updateStaff.mutateAsync({ id: staff.id, input: values });
+        // При редактировании: если пароль пустой — не отправляем его (не меняем)
+        const { password, ...rest } = values;
+        const input = password ? values : rest;
+        await updateStaff.mutateAsync({ id: staff.id, input });
         toast.success('Сотрудник обновлён');
       } else {
         await createStaff.mutateAsync(values);
@@ -111,9 +114,9 @@ export function StaffFormModal({
         />
         <div className="flex items-end gap-2">
           <Input
-            label="Временный пароль *"
+            label={staff ? 'Новый пароль' : 'Временный пароль *'}
             placeholder="••••••••"
-            hint="Передайте пароль сотруднику. Хэшируется на бэкенде."
+            hint={staff ? 'Оставьте пустым, чтобы не менять пароль.' : 'Передайте пароль сотруднику. Хэшируется на бэкенде.'}
             error={errors.password?.message}
             {...register('password')}
             className="flex-1"

@@ -185,7 +185,8 @@ class AppointmentStatus(str, Enum):
 | target | enum all \| users | да | Кому |
 | patient_ids | int[] (массив) | нет | Список ID получателей (если target = users) |
 | recipients_count | int | да | Сколько получателей выбрано |
-| sent_count | int | да, default 0 | Сколько реально отправлено |
+| accept_count | int | да, default 0 | Сколько отправлено в API Expo |
+| sent_count | int | да, default 0 | Сколько реально доставлено |
 | status | enum pending \| in_progress \| sent \| partial \| failed | да | |
 | task_id | string/uuid | нет | id фоновой задачи |
 | created_by | int (FK→admin_staff) | нет | Кто отправил |
@@ -194,6 +195,10 @@ class AppointmentStatus(str, Enum):
 | finished_at | datetime | нет | Когда закончилась |
 
 Почему статусы такие: `pending` — в очереди, `in_progress` — шлём, `sent` — всё доставлено, `partial` — часть упала, `failed` — ошибка.
+
+Разница между `accept_count` и `sent_count`:
+- `accept_count` — количество, принятое API Expo (заполняется сразу)
+- `sent_count` — количество, реально доставленное на устройства (обновляется асинхронно через ~15 сек)
 
 ### 3.8. Уведомление в приложении — messages
 
@@ -411,9 +416,12 @@ CRUD операции для пользователей.
 #### GET /admin/push/task-status/{task_id} — статус отправки
 - **Зачем**: прогресс-бар «Отправлено N из M».
 - **Ответ**:
-  `{ "task_id":"uuid", "status":"in_progress", "total":500, "sent":230, "failed":0, "progress":46 }`
-
-- **status**: progress — 0..100. Когда completed/failed — админка останавливает опрос.
+  `{ "task_id":"uuid", "status":"in_progress", "total":500, "accept":500, "sent":230, "failed":0, "progress":100 }`
+- **Поля**:
+  - `accept` — сколько отправлено в API Expo (сразу после отправки)
+  - `sent` — сколько реально доставлено (обновляется асинхронно каждые ~15 сек)
+  - `progress` — 0..100, рассчитывается от `accept` / `total`
+- Когда `status` === `completed`/`failed` — админка останавливает опрос.
 
 ### 4.6. Лояльность (/admin/loyalty)
 

@@ -1,11 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Ban,
   CircleCheck,
-  LogIn,
   Pencil,
   Plus,
   ShieldCheck,
@@ -21,43 +19,27 @@ import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { StaffFormModal } from './staff-form-modal';
 import { useStaffList, useToggleStaffBlock, useDeleteStaff } from '@/hooks/queries/useStaff';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { demoLogin } from '@/lib/demo-auth';
-import { ROLE_LABELS, toAdminUser } from '@/types/staff';
+import { ROLE_LABELS } from '@/types/staff';
 import type { StaffMember } from '@/types/staff';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
 export function StaffList() {
-  const router = useRouter();
   const { data: staff = [], isLoading } = useStaffList();
   const toggleBlock = useToggleStaffBlock();
   const deleteStaff = useDeleteStaff();
-  const setUser = useAuthStore((s) => s.setUser);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
   const [deleting, setDeleting] = useState<StaffMember | null>(null);
 
-  const handleDemoLogin = async (member: StaffMember) => {
+  const handleDelete = async () => {
+    if (!deleting) return;
     try {
-      await demoLogin(member);
-      setUser(toAdminUser(member));
-      toast.success(`Вы вошли как ${member.name} (демо)`);
-      router.push('/dashboard');
-      router.refresh();
+      await deleteStaff.mutateAsync(deleting.id);
+      toast.success('Сотрудник удалён');
     } catch (e) {
       toast.error(getErrorMessage(e));
     }
-  };
-
-  const handleDelete = () => {
-    if (!deleting) return;
-    if (deleting.role === 'admin' && deleting.id === 1) {
-      toast.error('Нельзя удалить основного администратора');
-      return;
-    }
-    deleteStaff.mutate(deleting.id);
-    toast.success('Сотрудник удалён');
   };
 
   const columns = useMemo<ColumnDef<StaffMember>[]>(
@@ -111,16 +93,6 @@ export function StaffList() {
         header: 'Действия',
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
-              onClick={() => handleDemoLogin(row.original)}
-              aria-label={`Войти как ${row.original.name}`}
-              title="Войти под этой учёткой (демо)"
-            >
-              <LogIn className="h-4 w-4" />
-            </Button>
             <Button variant="ghost" size="icon" onClick={() => setEditing(row.original)} aria-label="Редактировать">
               <Pencil className="h-4 w-4" />
             </Button>
@@ -128,7 +100,16 @@ export function StaffList() {
               variant="ghost"
               size="icon"
               className={row.original.is_blocked ? 'text-emerald-600' : 'text-amber-500'}
-              onClick={() => toggleBlock.mutate({ id: row.original.id, blocked: !row.original.is_blocked })}
+              onClick={() => {
+                const newBlocked = !row.original.is_blocked;
+                toggleBlock.mutate(
+                  { id: row.original.id, blocked: newBlocked },
+                  {
+                    onSuccess: () => toast.success(newBlocked ? 'Сотрудник заблокирован' : 'Сотрудник разблокирован'),
+                    onError: (e) => toast.error(getErrorMessage(e)),
+                  },
+                );
+              }}
               aria-label={row.original.is_blocked ? 'Разблокировать' : 'Заблокировать'}
             >
               {row.original.is_blocked ? <CircleCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}

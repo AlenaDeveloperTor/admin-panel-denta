@@ -8,9 +8,6 @@ import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth';
 import { authAPI } from '@/lib/api/auth';
-import { demoLogin } from '@/lib/demo-auth';
-import { useStaffStore, MAIN_ADMIN } from '@/stores/useStaffStore';
-import { toAdminUser } from '@/types/staff';
 import { getErrorMessage } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +19,6 @@ export function LoginForm() {
   const setUser = useAuthStore((s) => s.setUser);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
-  const staff = useStaffStore((s) => s.staff);
-  const [demoEmail, setDemoEmail] = useState(MAIN_ADMIN.email);
 
   useEffect(() => {
     if (searchParams.get('expired')) {
@@ -71,26 +65,6 @@ export function LoginForm() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    const member = staff.find((m) => m.email === demoEmail);
-    if (!member) {
-      toast.error('Сотрудник не найден');
-      return;
-    }
-    setDemoLoading(true);
-    try {
-      await demoLogin(member);
-      setUser(toAdminUser(member));
-      toast.success(`Демо-вход: ${member.name}`);
-      router.push('/dashboard');
-      router.refresh();
-    } catch (e) {
-      toast.error(getErrorMessage(e, 'Не удалось войти в демо-режиме'));
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-sm">
       <div className="mb-6 text-center">
@@ -133,39 +107,6 @@ export function LoginForm() {
             Войти
           </Button>
         </form>
-
-        <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-          <span className="text-xs text-slate-400">демо-режим</span>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-        </div>
-
-        <div className="space-y-2 rounded-lg border border-dashed border-brand-300 bg-brand-50/50 p-3 dark:border-brand-700 dark:bg-brand-900/20">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Без бэкенда — войти под учёткой для теста (основной администратор уже создан).
-          </p>
-          <div className="flex gap-2">
-            <select
-              value={demoEmail}
-              onChange={(e) => setDemoEmail(e.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            >
-              {staff
-                .filter((m) => !m.is_blocked)
-                .map((m) => (
-                  <option key={m.id} value={m.email}>
-                    {m.name} · {m.email}
-                  </option>
-                ))}
-            </select>
-            <Button type="button" variant="secondary" onClick={handleDemoLogin} loading={demoLoading}>
-              Войти
-            </Button>
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Основной админ: <b>director@clinic.ru</b> / <b>director123</b>
-          </p>
-        </div>
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">

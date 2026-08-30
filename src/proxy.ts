@@ -67,7 +67,9 @@ async function decodeToken(token: string): Promise<Record<string, unknown> | nul
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get('access_token')?.value;
+  console.log('[proxy.ts] Запрос к:', pathname, '| Token:', token ? `${token.slice(0, 20)}...` : 'нет');
   const payload = token ? await decodeToken(token) : null;
+  console.log('[proxy.ts] Декодированный payload:', payload ? { sub: payload.sub, role: payload.role } : null);
   const isStaff = payload ? isStaffPayload(payload) : false;
   const isAdmin = payload ? isAdminPayload(payload) : false;
   const isLogin = pathname === '/login';

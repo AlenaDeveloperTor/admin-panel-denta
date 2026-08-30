@@ -21,9 +21,10 @@ export function PushSendProgress({
   const { data, isError } = usePushTaskStatus(taskId);
 
   const total = data?.total ?? 0;
+  const accept = data?.accept ?? 0;
   const sent = data?.sent ?? 0;
   const failed = data?.failed ?? 0;
-  const progress = data?.progress ?? (total > 0 ? Math.round((sent / total) * 100) : 0);
+  const progress = data?.progress ?? (total > 0 ? Math.round((accept / total) * 100) : 0);
   const totalLabel = total > 0 ? formatNumber(total) : '…';
 
   const done = data?.status === 'completed' || data?.status === 'failed';
@@ -62,15 +63,16 @@ export function PushSendProgress({
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
               Рассылка завершена
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Отправлено: {formatNumber(sent)} · Ошибок: {formatNumber(failed)}
-            </p>
+            <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+              <p>Отправлено в Expo: {formatNumber(accept)}</p>
+              <p>Доставлено: {formatNumber(sent)} · Ошибок: {formatNumber(failed)}</p>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">
             <Loader2 className="h-10 w-10 animate-spin text-brand-600 dark:text-brand-400" />
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              {taskId ? `Отправлено ${formatNumber(sent)} из ${totalLabel}` : 'Формируем задачу…'}
+              {taskId ? `В Expo: ${formatNumber(accept)} · Доставлено: ${formatNumber(sent)}` : 'Формируем задачу…'}
             </p>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
@@ -79,6 +81,9 @@ export function PushSendProgress({
               />
             </div>
             <p className="text-xs text-slate-400">{progress}%</p>
+            {taskId && accept > 0 && sent < accept && (
+              <p className="text-xs text-slate-400">Доставка обновляется каждые 15 сек...</p>
+            )}
           </div>
         )}
       </div>

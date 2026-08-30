@@ -31,7 +31,9 @@ export interface PushHistoryItem {
   patient_ids?: number[];
   /** Всего получателей в рассылке */
   recipients_count: number;
-  /** Сколько реально отправлено (после завершения) */
+  /** Сколько отправлено в Expo (при активной рассылке) */
+  accept_count?: number;
+  /** Сколько реально доставлено (после завершения) */
   sent_count?: number;
   status: PushHistoryStatus;
   /** id задачи отправки для опроса прогресса */
@@ -44,6 +46,9 @@ export interface PushTaskStatus {
   task_id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   total: number;
+  /** Сколько отправлено в API Expo (сразу после отправки) */
+  accept: number;
+  /** Сколько реально доставлено (заполняется асинхронно через 15 сек) */
   sent: number;
   failed: number;
   /** 0..100 */
