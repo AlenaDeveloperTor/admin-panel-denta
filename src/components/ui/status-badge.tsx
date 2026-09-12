@@ -3,7 +3,6 @@ import { APPOINTMENT_STATUS_LABELS, type AppointmentStatus } from '@/types/appoi
 
 const toneByStatus: Record<AppointmentStatus, 'amber' | 'emerald' | 'rose' | 'slate' | 'sky'> = {
   created: 'sky',
-  pending: 'amber',
   confirmed: 'emerald',
   cancelled: 'rose',
   completed: 'slate',

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     const data = await backendRes.json().catch(() => ({}));
     console.log('[/api/session/refresh] Успешно! Токены получены:', { access: !!data.access_token, refresh: !!data.refresh_token });
-    const out = NextResponse.json({ ok: true });
+    const out = NextResponse.json({ ok: true, access_token: data.access_token ?? null });
 
     // Пробрасываем Set-Cookie от бэкенда
     const setCookies = backendRes.headers.getSetCookie?.() ?? [];

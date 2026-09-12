@@ -18,6 +18,8 @@ import type { AppointmentFilters } from '@/types/appointment';
 import { fullName } from '@/types/user';
 import { exportToCsv } from '@/lib/csv';
 import { cn } from '@/lib/utils';
+import { settingsAPI } from '@/lib/api/settings';
+import { useQuery } from '@tanstack/react-query';
 
 type View = 'list' | 'calendar';
 
@@ -29,6 +31,12 @@ export default function AppointmentsPage() {
   const [createDate, setCreateDate] = useState<string | undefined>();
 
   const { data, isLoading, isFetching } = useAppointments(filters);
+  const { data: clinicSettings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsAPI.get().then((response) => response.data),
+    retry: false,
+  });
+  const clinicTimeZone = clinicSettings?.timezone ?? 'Europe/Moscow';
 
   const appointments = useMemo(() => data?.items ?? [], [data]);
 
@@ -133,6 +141,7 @@ export default function AppointmentsPage() {
               appointments={appointments}
               loading={isLoading || (isFetching && !data)}
               onSelect={(a) => setSelectedId(a.id)}
+              timeZone={clinicTimeZone}
             />
           ) : (
             <AppointmentsCalendar
@@ -141,6 +150,7 @@ export default function AppointmentsPage() {
               onDayClick={(date) => openCreate(date)}
               dateFrom={filters.date_from}
               onRangeChange={(from, to) => setFilters({ date_from: from, date_to: to })}
+              timeZone={clinicTimeZone}
             />
           )}
         </div>

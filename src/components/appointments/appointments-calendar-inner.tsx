@@ -7,13 +7,12 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ruLocale from '@fullcalendar/core/locales/ru';
 import type { CalendarApi } from '@fullcalendar/core';
-import { appointmentTime } from '@/types/appointment';
 import type { Appointment, AppointmentStatus } from '@/types/appointment';
 import { fullName } from '@/types/user';
+import { formatDateTimeInTimeZone } from '@/lib/utils';
 
 const STATUS_COLOR: Record<AppointmentStatus, string> = {
   created: '#0ea5e9',
-  pending: '#f59e0b',
   confirmed: '#10b981',
   cancelled: '#f43f5e',
   completed: '#64748b',
@@ -25,12 +24,14 @@ export function AppointmentsCalendarInner({
   onDayClick,
   dateFrom,
   onRangeChange,
+  timeZone,
 }: {
   appointments: Appointment[];
   onSelect: (appointment: Appointment) => void;
   onDayClick: (dateISO: string) => void;
   dateFrom?: string;
   onRangeChange: (from: string, to: string) => void;
+  timeZone: string;
 }) {
   const calendarRef = useRef<CalendarApi | null>(null);
   const lastEmittedStartRef = useRef<string | null>(null);
@@ -46,7 +47,7 @@ export function AppointmentsCalendarInner({
     .filter((a) => a.appointment_datetime)
     .map((a) => ({
       id: a.id,
-      title: `${appointmentTime(a)} · ${fullName(a.patient)}`,
+      title: `${formatDateTimeInTimeZone(a.appointment_datetime as string, timeZone)} · ${fullName(a.patient)}`,
       start: a.appointment_datetime as string,
       backgroundColor: STATUS_COLOR[a.status],
       borderColor: STATUS_COLOR[a.status],
@@ -71,6 +72,7 @@ export function AppointmentsCalendarInner({
       buttonText={{ today: 'Сегодня', month: 'Месяц', week: 'Неделя' }}
       height="auto"
       events={events}
+      timeZone={timeZone}
       eventClick={(info) => onSelect(info.event.extendedProps.appointment as Appointment)}
       dateClick={(info) => onDayClick(info.dateStr)}
       datesSet={(info) => {

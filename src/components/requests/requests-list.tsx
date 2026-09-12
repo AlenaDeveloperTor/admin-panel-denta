@@ -26,16 +26,21 @@ export function RequestsList({
 }: {
   requests: Appointment[];
   loading: boolean;
-  onSelect: (request: Appointment) => void;
+  onSelect: (request: Appointment, startEditing?: boolean) => void;
 }) {
   const updateStatus = useUpdateAppointmentStatus();
   const seenIds = useRequestsStore((s) => s.seenIds);
   const seen = useMemo(() => new Set(seenIds), [seenIds]);
 
   const quickAction = async (request: Appointment, status: 'confirmed' | 'cancelled') => {
+    if (status === 'confirmed') {
+      onSelect(request, true);
+      return;
+    }
+
     try {
       await updateStatus.mutateAsync({ id: request.id, status });
-      toast.success(status === 'confirmed' ? 'Заявка подтверждена' : 'Заявка отклонена');
+      toast.success('Заявка отклонена');
     } catch (e) {
       toast.error(getErrorMessage(e));
     }
@@ -88,7 +93,10 @@ export function RequestsList({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
-                    onClick={() => quickAction(request, 'confirmed')}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelect(request);
+                    }}
                     aria-label="Подтвердить"
                     loading={updateStatus.isPending}
                   >
@@ -98,7 +106,10 @@ export function RequestsList({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30"
-                    onClick={() => quickAction(request, 'cancelled')}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void quickAction(request, 'cancelled');
+                    }}
                     aria-label="Отклонить"
                     loading={updateStatus.isPending}
                   >

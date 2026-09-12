@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { SearchInput } from '@/components/ui/search-input';
 import { Badge } from '@/components/ui/badge';
@@ -78,16 +77,11 @@ export function LoyaltyHistory() {
             <Skeleton className="h-14 w-full" />
             <Skeleton className="h-14 w-full" />
           </div>
-        ) : !debouncedPhone.trim() ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Search className="h-8 w-8 text-slate-300" />
-            <p className="text-sm text-slate-400">
-              Введите телефон пациента, чтобы увидеть его операции с баллами
-            </p>
-          </div>
         ) : history.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">
-            По этому телефону операций не найдено
+            {debouncedPhone.trim()
+              ? 'По этому телефону операций не найдено'
+              : 'Операций с баллами пока нет'}
           </p>
         ) : (
           <>

@@ -18,7 +18,7 @@ const initial: AppointmentFilters = {
   date_to: endOfMonth,
   status: '',
   page: 1,
-  limit: 200,
+  limit: 100,
 };
 
 /** Фильтры записей — сохраняются между страницами (ТЗ §10.1) */

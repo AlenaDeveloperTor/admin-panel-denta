@@ -1,13 +1,13 @@
 import type { Service } from './service';
 import type { User } from './user';
 
-export const APPOINTMENT_STATUSES = ['created', 'pending', 'confirmed', 'cancelled', 'completed'] as const;
+// Бэкенд поддерживает только эти статусы: 'created' | 'confirmed' | 'completed' | 'cancelled'
+export const APPOINTMENT_STATUSES = ['created', 'confirmed', 'cancelled', 'completed'] as const;
 
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  created: 'Новая',
-  pending: 'В ожидании',
+  created: 'Новая заявка',
   confirmed: 'Подтверждена',
   cancelled: 'Отменена',
   completed: 'Завершена',
@@ -49,7 +49,6 @@ export interface AppointmentFilters {
 /** Цвет статуса для календаря/бейджей */
 export const STATUS_COLORS: Record<AppointmentStatus, string> = {
   created: 'sky',
-  pending: 'amber',
   confirmed: 'emerald',
   cancelled: 'rose',
   completed: 'slate',

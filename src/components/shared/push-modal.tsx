@@ -9,14 +9,15 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 import { pushAPI } from '@/lib/api/push';
 import { resolvePhoneToUserId } from '@/lib/push-resolve';
 import { getErrorMessage } from '@/lib/utils';
 
 const pushSchema = z.object({
+  category: z.enum(['promo', 'system', 'info']).default('system'),
   title: z.string().min(3, 'Заголовок — минимум 3 символа'),
   body: z.string().min(3, 'Текст — минимум 3 символа'),
-  deep_link: z.string().optional().or(z.literal('')),
 });
 
 type PushFormValues = z.infer<typeof pushSchema>;
@@ -48,7 +49,7 @@ export function PushModal({
     formState: { errors },
   } = useForm<PushFormValues>({
     resolver: zodResolver(pushSchema),
-    defaultValues: { title: '', body: '', deep_link: 'app://appointments' },
+    defaultValues: { category: 'system', title: '', body: '' },
   });
 
   const close = () => {
@@ -70,7 +71,6 @@ export function PushModal({
       await pushAPI.send({
         title: values.title,
         body: values.body,
-        deep_link: values.deep_link,
         patient_ids: [patientId],
       });
       toast.success('Уведомление отправлено');
@@ -101,8 +101,16 @@ export function PushModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" id="push-form">
         <Input label="Заголовок *" placeholder="Например: Напоминание о записи" error={errors.title?.message} {...register('title')} />
+        <Select
+          label="Тип уведомления"
+          options={[
+            { value: 'system', label: 'Обычное уведомление' },
+            { value: 'promo', label: 'Акция' },
+            { value: 'info', label: 'Информация' },
+          ]}
+          {...register('category')}
+        />
         <Textarea label="Текст *" placeholder="Текст уведомления…" rows={4} error={errors.body?.message} {...register('body')} />
-        <Input label="Deep link" placeholder="app://appointments" hint="Куда откроется приложение при тапе" error={errors.deep_link?.message} {...register('deep_link')} />
       </form>
     </Modal>
   );

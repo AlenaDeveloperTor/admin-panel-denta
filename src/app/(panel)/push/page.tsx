@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { PushPreview } from '@/components/push/push-preview';
 import { PushHistory } from '@/components/push/push-history';
@@ -47,7 +48,7 @@ export default function PushPage() {
     formState: { errors },
   } = useForm<PushFormValues>({
     resolver: zodResolver(pushSchema),
-    defaultValues: { title: '', body: '', deep_link: 'app://appointments', image_url: '' },
+    defaultValues: { category: 'system', title: '', body: '', image_url: '' },
   });
 
   const formValues = watch();
@@ -100,9 +101,9 @@ export default function PushPage() {
     const values = getValues();
     const draft: PushDraft = {
       id: crypto.randomUUID(),
+      category: values.category,
       title: values.title,
       body: values.body,
-      deep_link: values.deep_link ?? '',
       image_url: values.image_url ?? '',
       target,
       phones,
@@ -115,9 +116,9 @@ export default function PushPage() {
 
   const loadDraft = (draft: PushDraft) => {
     reset({
+      category: draft.category ?? 'system',
       title: draft.title,
       body: draft.body,
-      deep_link: draft.deep_link,
       image_url: draft.image_url || '',
     });
     setTarget(draft.target);
@@ -164,9 +165,9 @@ export default function PushPage() {
       }
 
       const res = await sendPush.mutateAsync({
+        category: values.category,
         title: values.title,
         body: values.body,
-        deep_link: values.deep_link,
         image_url: values.image_url,
         target: target === 'all' ? 'all' : 'users',
         patient_ids: patientIds,
@@ -177,7 +178,7 @@ export default function PushPage() {
       } else {
         toast.success('Рассылка отправлена');
       }
-      reset({ title: '', body: '', deep_link: 'app://appointments', image_url: '' });
+      reset({ category: 'system', title: '', body: '', image_url: '' });
       setPhones([]);
       setPatients([]);
       setTarget('all');
@@ -279,6 +280,15 @@ export default function PushPage() {
 
             <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
+            <Select
+              label="Тип уведомления"
+              options={[
+                { value: 'system', label: 'Обычное уведомление' },
+                { value: 'promo', label: 'Акция' },
+                { value: 'info', label: 'Информация' },
+              ]}
+              {...register('category')}
+            />
             <Input
               label="Заголовок *"
               placeholder="Например: Напоминание о приёме"
@@ -292,14 +302,7 @@ export default function PushPage() {
               error={errors.body?.message}
               {...register('body')}
             />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="Deep link"
-                placeholder="app://appointments"
-                hint="Куда откроется приложение при тапе"
-                error={errors.deep_link?.message}
-                {...register('deep_link')}
-              />
+            <div>
               <Input
                 label="Изображение (URL)"
                 placeholder="https://…/banner.jpg"

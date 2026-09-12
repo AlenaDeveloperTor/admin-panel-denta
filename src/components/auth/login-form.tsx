@@ -17,6 +17,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setUser = useAuthStore((s) => s.setUser);
+  const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -40,6 +41,11 @@ export function LoginForm() {
     try {
       const res = await authAPI.login(values.email, values.password);
       const data = res.data;
+
+      // Сохраняем access_token в in-memory store → axios добавит Bearer ко всем запросам
+      if (data?.access_token) {
+        setAccessToken(data.access_token);
+      }
 
       // Fallback: если бэкенд вернул токены в теле (а не Set-Cookie) — сохраняем в httpOnly-куки через BFF
       if (data?.access_token) {

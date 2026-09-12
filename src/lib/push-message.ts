@@ -1,12 +1,11 @@
-import { appointmentDate, appointmentTime } from '@/types/appointment';
 import type { Appointment } from '@/types/appointment';
-import { formatDate } from './utils';
+import { formatDateTimeInTimeZone } from './utils';
 
 /** Готовые тексты push-уведомлений, которые отправляются автоматически */
 export interface GeneratedPush {
   title: string;
   body: string;
-  deep_link: string;
+  category: 'system';
 }
 
 /** Имя пациента для обращения, напр. «Иван» */
@@ -15,18 +14,33 @@ function firstName(user: Appointment['patient']): string | null {
   return name || null;
 }
 
+/** Push о создании новой записи администратором */
+export function buildCreationPush(appointment: Appointment, timeZone = 'Europe/Moscow'): GeneratedPush {
+  const name = firstName(appointment.patient);
+  const greeting = name ? `${name}, ` : '';
+  const service = appointment.service?.name ?? 'запись';
+  const when = appointment.appointment_datetime 
+    ? formatDateTimeInTimeZone(appointment.appointment_datetime, timeZone)
+    : '';
+  return {
+    title: 'Новая запись в клинику',
+    body: `${greeting}вы записаны на «${service}»${when ? ` — ${when}` : ''}. Ждём вас!`,
+    category: 'system',
+  };
+}
+
 /** Push о подтверждении записи */
-export function buildConfirmationPush(appointment: Appointment): GeneratedPush {
+export function buildConfirmationPush(appointment: Appointment, timeZone = 'Europe/Moscow'): GeneratedPush {
   const name = firstName(appointment.patient);
   const greeting = name ? `Уважаемый(ая) ${name}! ` : '';
   const service = appointment.service?.name ?? 'ваша запись';
   const when = appointment.appointment_datetime
-    ? `${formatDate(appointmentDate(appointment) ?? '')} в ${appointmentTime(appointment)}`
+    ? formatDateTimeInTimeZone(appointment.appointment_datetime, timeZone)
     : '';
   return {
     title: 'Запись подтверждена',
     body: `${greeting}${service} подтверждена${when ? ` на ${when}` : ''}. Будем рады видеть вас в клинике!`,
-    deep_link: 'app://appointments',
+    category: 'system',
   };
 }
 
@@ -38,6 +52,6 @@ export function buildCancellationPush(appointment: Appointment): GeneratedPush {
   return {
     title: 'Запись отменена',
     body: `${greeting}К сожалению, ${service.toLowerCase()} пришлось отменить. Позвоните нам, чтобы подобрать новое время.`,
-    deep_link: 'app://appointments',
+    category: 'system',
   };
 }

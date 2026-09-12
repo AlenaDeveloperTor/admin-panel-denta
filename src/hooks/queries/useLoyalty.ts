@@ -18,7 +18,6 @@ export function useLoyaltyHistory(params: {
       const res = await loyaltyAPI.history(params);
       return normalizePage<LoyaltyTransaction>(res.data, params.page ?? 1, params.limit ?? 20);
     },
-    enabled: Boolean(params.phone || params.user_id),
     placeholderData: (prev) => prev,
   });
 }

@@ -54,6 +54,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
   const unreadRequests = useUnreadRequests();
   const role = useAuthStore((s) => s.user?.role);
   const canManageStaff = role !== 'manager';
+  const canManageSettings = role === 'admin';
 
   return (
     <div className="flex h-full flex-col">
@@ -70,7 +71,11 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {NAV_ITEMS.filter((item) => item.href !== '/staff' || canManageStaff).map((item) => {
+        {NAV_ITEMS.filter(
+          (item) =>
+            (item.href !== '/staff' || canManageStaff) &&
+            (item.href !== '/settings' || canManageSettings),
+        ).map((item) => {
           const active =
             pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (

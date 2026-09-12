@@ -8,9 +8,8 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Pagination } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
 import { fullName } from '@/types/user';
-import { appointmentDate, appointmentTime } from '@/types/appointment';
 import type { Appointment } from '@/types/appointment';
-import { formatDate } from '@/lib/utils';
+import { formatDateTimeInTimeZone } from '@/lib/utils';
 
 const PAGE_SIZE = 15;
 
@@ -18,10 +17,12 @@ export function AppointmentsList({
   appointments,
   loading,
   onSelect,
+  timeZone,
 }: {
   appointments: Appointment[];
   loading?: boolean;
   onSelect: (appointment: Appointment) => void;
+  timeZone: string;
 }) {
   const [page, setPage] = useState(1);
 
@@ -47,8 +48,9 @@ export function AppointmentsList({
           }
           return (
             <div className="whitespace-nowrap">
-              <span className="font-semibold">{appointmentTime(row.original)}</span>
-              <span className="ml-2 text-xs text-slate-400">{formatDate(appointmentDate(row.original))}</span>
+              <span className="font-semibold">
+                {formatDateTimeInTimeZone(row.original.appointment_datetime, timeZone)}
+              </span>
             </div>
           );
         },
@@ -78,7 +80,7 @@ export function AppointmentsList({
         ),
       },
     ],
-    [onSelect],
+    [onSelect, timeZone],
   );
 
   return (

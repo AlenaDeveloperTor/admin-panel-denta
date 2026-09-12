@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
   CalendarDays,
   Clock,
+  Edit2,
   MessageSquare,
   Phone,
   UserRound,
@@ -11,11 +12,15 @@ import {
 import { toast } from 'sonner';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PushModal } from '@/components/shared/push-modal';
 import { PatientCard } from '@/components/patients/patient-card';
-import { useAppointment, useUpdateAppointmentStatus } from '@/hooks/queries/useAppointments';
+import { useAppointment, useUpdateAppointment } from '@/hooks/queries/useAppointments';
+import { useServices } from '@/hooks/queries/useServices';
 import { useSendPush } from '@/hooks/queries/usePush';
 import { buildConfirmationPush } from '@/lib/push-message';
 import { resolvePhoneToUserId } from '@/lib/push-resolve';
@@ -42,45 +47,94 @@ function Row({ icon, label, value }: { icon: ReactNode; label: string; value: Re
 export function RequestDetail({
   requestId,
   onClose,
+  startEditing = false,
 }: {
   requestId: string | null;
   onClose: () => void;
+  startEditing?: boolean;
 }) {
   const { data: request, isLoading } = useAppointment(requestId);
-  const updateStatus = useUpdateAppointmentStatus();
+  const { data: services } = useServices();
+  const updateAppointment = useUpdateAppointment();
   const sendPush = useSendPush();
   const [pushOpen, setPushOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
 
-  const changeStatus = async (status: 'confirmed' | 'cancelled') => {
+  // Состояние формы редактирования заявки
+  const [isEditing, setIsEditing] = useState(false);
+  const [datetime, setDatetime] = useState('');
+  const [serviceId, setServiceId] = useState<string>('');
+  const [comment, setComment] = useState('');
+
+  // При открытии заявки заполняем поля
+  useEffect(() => {
+    if (request) {
+      if (request.appointment_datetime) {
+        const d = new Date(request.appointment_datetime);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        setDatetime(d.toISOString().slice(0, 16));
+      } else {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        setDatetime(d.toISOString().slice(0, 16));
+      }
+      setServiceId(String(request.service?.id ?? request.service_id ?? ''));
+      setComment(request.comment ?? '');
+      setIsEditing(startEditing && request.status === 'created');
+    }
+  }, [request, startEditing]);
+
+  const saveAndChangeStatus = async (status: 'confirmed' | 'cancelled') => {
     if (!requestId || !request) return;
     try {
-      await updateStatus.mutateAsync({ id: requestId, status });
+      const payload: {
+        status: 'confirmed' | 'cancelled';
+        appointment_datetime?: string;
+        service_id?: number;
+        comment?: string;
+      } = { status };
 
-      // Автоматическое уведомление клиента о подтверждении (по patient_ids)
+      if (status === 'confirmed') {
+        if (datetime) {
+          payload.appointment_datetime = new Date(datetime).toISOString();
+        }
+        if (serviceId) {
+          payload.service_id = Number(serviceId);
+        }
+        if (comment !== undefined) {
+          payload.comment = comment;
+        }
+      }
+
+      await updateAppointment.mutateAsync({ id: requestId, data: payload });
+
+      // Автоматическое уведомление клиента о подтверждении
       if (status === 'confirmed' && notifyOnConfirm) {
         let targetId = request.patient?.id ?? null;
         if (!targetId && phone) targetId = await resolvePhoneToUserId(phone);
         if (targetId) {
           try {
-            const push = buildConfirmationPush(request);
+            const updatedReq = {
+              ...request,
+              appointment_datetime: payload.appointment_datetime ?? request.appointment_datetime,
+              service: services?.find((s) => String(s.id) === String(serviceId)) ?? request.service,
+            };
+            const push = buildConfirmationPush(updatedReq);
             await sendPush.mutateAsync({
               target: 'users',
               patient_ids: [targetId],
               title: push.title,
               body: push.body,
-              deep_link: push.deep_link,
             });
           } catch (pushError) {
-            toast.warning('Заявка подтверждена, но push не отправился', {
-              description: getErrorMessage(pushError),
-            });
+            console.warn('Push error:', pushError);
           }
         }
       }
 
-      toast.success(status === 'confirmed' ? 'Заявка подтверждена' : 'Заявка отклонена');
+      toast.success(status === 'confirmed' ? 'Заявка подтверждена и перенесена в Записи' : 'Заявка отклонена');
+      setIsEditing(false);
       onClose();
     } catch (e) {
       toast.error(getErrorMessage(e));
@@ -94,8 +148,11 @@ export function RequestDetail({
     <>
       <Modal
         open={Boolean(requestId)}
-        onClose={onClose}
-        title="Новая заявка на запись"
+        onClose={() => {
+          setIsEditing(false);
+          onClose();
+        }}
+        title="Заявка на запись"
         description={request ? `Заявка #${request.id} · создана ${formatDateTime(request.created_at)}` : undefined}
         size="md"
         footer={
@@ -104,22 +161,45 @@ export function RequestDetail({
               <div className="flex flex-wrap gap-2">
                 {phone && (
                   <Button variant="secondary" onClick={() => setPushOpen(true)}>
-                    <MessageSquare className="h-4 w-4" /> Push
+                    <MessageSquare className="h-4 w-4" /> Написать пациенту
                   </Button>
                 )}
                 {patient && (
-                  <Button variant="secondary" onClick={() => setCardOpen(true)}>
-                    <UserRound className="h-4 w-4" /> Карточка пациента
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => setCardOpen(true)}
+                    aria-label="Открыть карточку пациента"
+                    title="Открыть карточку пациента"
+                  >
+                    <UserRound className="h-4 w-4" />
+                  </Button>
+                )}
+                {request.status === 'created' && !isEditing && (
+                  <Button variant="secondary" onClick={() => setIsEditing(true)}>
+                    <Edit2 className="h-4 w-4" /> Редактировать
                   </Button>
                 )}
               </div>
-              {request.status === 'pending' && (
+              {request.status === 'created' && (
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="danger" onClick={() => changeStatus('cancelled')} loading={updateStatus.isPending}>
+                  {isEditing && (
+                    <Button variant="secondary" onClick={() => setIsEditing(false)}>
+                      Отмена
+                    </Button>
+                  )}
+                  <Button
+                    variant="danger"
+                    onClick={() => saveAndChangeStatus('cancelled')}
+                    loading={updateAppointment.isPending}
+                  >
                     Отклонить
                   </Button>
-                  <Button onClick={() => changeStatus('confirmed')} loading={updateStatus.isPending}>
-                    Подтвердить запись
+                  <Button
+                    onClick={() => saveAndChangeStatus('confirmed')}
+                    loading={updateAppointment.isPending}
+                  >
+                    Принять
                   </Button>
                 </div>
               )}
@@ -141,25 +221,56 @@ export function RequestDetail({
             </div>
             <Row icon={<UserRound className="h-4 w-4" />} label="Пациент" value={fullName(patient)} />
             <Row icon={<Phone className="h-4 w-4" />} label="Телефон" value={formatPhone(phone)} />
-            <Row icon={<CalendarDays className="h-4 w-4" />} label="Услуга" value={request.service?.name ?? '—'} />
-            <Row
-              icon={<Clock className="h-4 w-4" />}
-              label="Время визита"
-              value={
-                request.appointment_datetime
-                  ? `${formatDate(appointmentDate(request) ?? '')} · ${appointmentTime(request)}`
-                  : 'Не назначено'
-              }
-            />
-            {request.comment && (
-              <Row
-                icon={<MessageSquare className="h-4 w-4" />}
-                label="Комментарий клиента"
-                value={<span className="whitespace-pre-wrap">{request.comment}</span>}
-              />
+
+            {/* Режим редактирования или просмотра */}
+            {isEditing ? (
+              <div className="space-y-3 py-3">
+                <Select
+                  label="Услуга *"
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                  options={
+                    (services ?? [])
+                      .filter((s) => s.is_active)
+                      .map((s) => ({ value: s.id, label: `${s.name} · ${s.price} ₽` })) ?? []
+                  }
+                />
+                <Input
+                  label="Дата и время визита *"
+                  type="datetime-local"
+                  value={datetime}
+                  onChange={(e) => setDatetime(e.target.value)}
+                />
+                <Textarea
+                  label="Комментарий администратора"
+                  rows={2}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </div>
+            ) : (
+              <>
+                <Row icon={<CalendarDays className="h-4 w-4" />} label="Услуга" value={request.service?.name ?? '—'} />
+                <Row
+                  icon={<Clock className="h-4 w-4" />}
+                  label="Время визита"
+                  value={
+                    request.appointment_datetime
+                      ? `${formatDate(appointmentDate(request) ?? '')} · ${appointmentTime(request)}`
+                      : 'Не назначено'
+                  }
+                />
+                {request.comment && (
+                  <Row
+                    icon={<MessageSquare className="h-4 w-4" />}
+                    label="Комментарий клиента"
+                    value={<span className="whitespace-pre-wrap">{request.comment}</span>}
+                  />
+                )}
+              </>
             )}
 
-            {request.status === 'pending' && (
+            {request.status === 'created' && (
               <label className="mt-3 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
                 <input
                   type="checkbox"
@@ -185,7 +296,7 @@ export function RequestDetail({
         patientName={patient ? fullName(patient) : undefined}
         userId={patient?.id}
       />
-      <PatientCard userId={patient?.id ?? null} onClose={() => setCardOpen(false)} />
+      <PatientCard userId={cardOpen ? patient?.id ?? null : null} onClose={() => setCardOpen(false)} />
     </>
   );
 }

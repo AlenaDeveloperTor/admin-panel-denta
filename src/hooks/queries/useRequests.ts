@@ -6,7 +6,7 @@ import { normalizePage } from '@/lib/api/normalize';
 import type { PageResult } from '@/types/api';
 import type { Appointment } from '@/types/appointment';
 
-const REQUEST_STATUSES = ['pending', 'created'] as const;
+const REQUEST_STATUSES = ['created'] as const;
 
 /** Статусы, которые считаются «новыми заявками» */
 export function isRequestStatus(status: Appointment['status']): boolean {
@@ -34,13 +34,9 @@ export function useRequests() {
   return useQuery({
     queryKey: ['requests'],
     queryFn: async () => {
-      const [pendingRes, createdRes] = await Promise.all([
-        appointmentsAPI.list({ status: 'pending', limit: 50 }),
-        appointmentsAPI.list({ status: 'created', limit: 50 }),
-      ]);
-      const pending = normalizePage<Appointment>(pendingRes.data, 1, 50);
-      const created = normalizePage<Appointment>(createdRes.data, 1, 50);
-      return mergePageResults(pending, created);
+      // Бэкенд принимает только: 'created' | 'confirmed' | 'completed' | 'cancelled'
+      const createdRes = await appointmentsAPI.list({ source: 'client', status: 'created', limit: 50 });
+      return normalizePage<Appointment>(createdRes.data, 1, 50);
     },
     refetchInterval: 30_000,
     placeholderData: (prev) => prev,

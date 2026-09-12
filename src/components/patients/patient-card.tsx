@@ -22,7 +22,7 @@ import { usePatientAppointments } from '@/hooks/queries/useAppointments';
 import { useLoyaltyHistory } from '@/hooks/queries/useLoyalty';
 import { APPOINTMENT_STATUS_LABELS, appointmentDate, appointmentTime } from '@/types/appointment';
 import { fullName, formatPhone } from '@/types/user';
-import { formatDate, formatDateTime, formatNumber } from '@/lib/utils';
+import { formatDate, formatDateTime, formatNumber, getErrorMessage } from '@/lib/utils';
 
 /**
  * Карточка пациента: контакты, баланс баллов, история записей и операций с баллами.
@@ -36,7 +36,7 @@ export function PatientCard({
   onClose: () => void;
 }) {
   const { data: user, isLoading } = useUser(userId);
-  const { data: appointments, isLoading: apptsLoading } = usePatientAppointments(userId, 8);
+  const { data: appointments, isLoading: apptsLoading, error: apptsError } = usePatientAppointments(userId, 8);
   const { data: loyaltyPage, isLoading: loyaltyLoading } = useLoyaltyHistory({
     user_id: userId ?? undefined,
     limit: 6,
@@ -136,6 +136,8 @@ export function PatientCard({
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
               </div>
+            ) : apptsError ? (
+              <p className="text-sm text-rose-500">Не удалось загрузить историю: {getErrorMessage(apptsError)}</p>
             ) : appointments && appointments.length > 0 ? (
               <div className="overflow-hidden rounded-lg border border-slate-100 dark:border-slate-800">
                 {appointments.map((a) => (

@@ -2,13 +2,9 @@ import { z } from 'zod';
 
 /** Схема формы составления push-уведомления */
 export const pushSchema = z.object({
+  category: z.enum(['promo', 'system', 'info']).default('system'),
   title: z.string().min(3, 'Заголовок — минимум 3 символа').max(80, 'Заголовок — максимум 80 символов'),
   body: z.string().min(3, 'Текст — минимум 3 символа').max(500, 'Текст — максимум 500 символов'),
-  deep_link: z
-    .string()
-    .optional()
-    .or(z.literal(''))
-    .transform((v) => v || undefined),
   image_url: z
     .string()
     .optional()

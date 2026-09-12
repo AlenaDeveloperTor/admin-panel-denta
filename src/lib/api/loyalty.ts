@@ -1,5 +1,6 @@
 import type {
   AdjustLoyaltyInput,
+  LoyaltyHistoryResponse,
   LoyaltyTransaction,
 } from '@/types/loyalty';
 import { api } from './client';
@@ -13,7 +14,7 @@ import { api } from './client';
 export const loyaltyAPI = {
   /** История операций (пагинация, поиск по phone или user_id) */
   history: (params: { phone?: string; user_id?: number; page?: number; limit?: number }) =>
-    api.get<LoyaltyTransaction[]>('/loyalty/history', { params }),
+    api.get<LoyaltyHistoryResponse>('/loyalty/history', { params }),
 
   /** Ручное начисление/списание баллов пациенту (amount может быть отрицательным) */
   adjustBalance: (input: AdjustLoyaltyInput) =>

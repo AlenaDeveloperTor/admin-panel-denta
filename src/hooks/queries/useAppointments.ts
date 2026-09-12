@@ -9,11 +9,18 @@ export function useAppointments(filters: AppointmentFilters) {
   return useQuery({
     queryKey: ['appointments', filters],
     queryFn: async () => {
+      // Бэкенд /admin/appointments принимает date_from/date_to в формате ISO datetime
+      // Конвертируем YYYY-MM-DD → YYYY-MM-DDTHH:mm:ss
+      const toDatetime = (d?: string) =>
+        d ? (d.includes('T') ? d : `${d}T00:00:00`) : undefined;
+      const toDatetimeEnd = (d?: string) =>
+        d ? (d.includes('T') ? d : `${d}T23:59:59`) : undefined;
+
       const res = await appointmentsAPI.list({
         page: filters.page,
         limit: filters.limit,
-        date_from: filters.date_from || undefined,
-        date_to: filters.date_to || undefined,
+        date_from: toDatetime(filters.date_from),
+        date_to: toDatetimeEnd(filters.date_to),
         status: filters.status || undefined,
       });
       return normalizePage<Appointment>(res.data, filters.page ?? 1, filters.limit ?? 50);
@@ -46,7 +53,7 @@ export function usePatientAppointments(userId: number | null, limit = 10) {
   return useQuery({
     queryKey: ['appointments', 'patient', userId],
     queryFn: async () => {
-      const res = await appointmentsAPI.list({ user_id: userId ?? undefined, limit });
+      const res = await appointmentsAPI.list({ user_id: userId ?? undefined, page: 1, limit });
       return normalizePage<Appointment>(res.data, 1, limit).items;
     },
     enabled: Boolean(userId),
@@ -69,3 +76,23 @@ export function useUpdateAppointmentStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
   });
 }
+
+export function useUpdateAppointment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        status?: AppointmentStatus;
+        appointment_datetime?: string;
+        service_id?: number | string;
+        comment?: string;
+      };
+    }) => appointmentsAPI.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
+  });
+}
+

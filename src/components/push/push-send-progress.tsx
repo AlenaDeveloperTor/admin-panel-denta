@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { formatNumber } from '@/lib/utils';
  * Модалка прогресса отправки рассылки.
  * Пока бэкенд не вернул task_id — показываем «формируем задачу»,
  * дальше опрашиваем GET /admin/push/task-status/{task_id}.
+ * Авто-закрывается через 3 секунды после завершения.
  */
 export function PushSendProgress({
   taskId,
@@ -25,10 +27,24 @@ export function PushSendProgress({
   const sent = data?.sent ?? 0;
   const failed = data?.failed ?? 0;
   const progress = data?.progress ?? (total > 0 ? Math.round((accept / total) * 100) : 0);
-  const totalLabel = total > 0 ? formatNumber(total) : '…';
 
-  const done = data?.status === 'completed' || data?.status === 'failed';
+  const done =
+    data?.status === 'completed' ||
+    data?.status === 'sent' ||
+    data?.status === 'partial' ||
+    data?.status === 'failed' ||
+    progress >= 100 ||
+    (total > 0 && accept + failed >= total);
   const failedOverall = data?.status === 'failed';
+
+  // Авто-закрытие через 3 секунды после завершения
+  useEffect(() => {
+    if (!done && !isError) return;
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [done, isError, onClose]);
 
   return (
     <Modal
@@ -37,15 +53,7 @@ export function PushSendProgress({
       title="Отправка рассылки"
       description="Уведомления доставляются клиентам"
       size="sm"
-      footer={
-        done || isError ? (
-          <Button onClick={onClose}>Закрыть</Button>
-        ) : (
-          <p className="w-full text-center text-xs text-slate-400">
-            Не закрывайте окно до завершения отправки
-          </p>
-        )
-      }
+      footer={<Button onClick={onClose}>{done || isError ? 'Закрыть' : 'Скрыть'}</Button>}
     >
       <div className="space-y-4 py-2">
         {isError || failedOverall ? (
@@ -56,6 +64,7 @@ export function PushSendProgress({
                 ? 'Не удалось получить статус отправки. Проверьте историю рассылок.'
                 : 'При отправке произошла ошибка. Часть уведомлений могла быть доставлена.'}
             </p>
+            <p className="text-xs text-slate-400">Окно закроется автоматически через 3 секунды</p>
           </div>
         ) : done ? (
           <div className="flex flex-col items-center gap-3 text-center">
@@ -67,6 +76,7 @@ export function PushSendProgress({
               <p>Отправлено в Expo: {formatNumber(accept)}</p>
               <p>Доставлено: {formatNumber(sent)} · Ошибок: {formatNumber(failed)}</p>
             </div>
+            <p className="text-xs text-slate-400">Окно закроется автоматически через 3 секунды</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">
@@ -82,7 +92,7 @@ export function PushSendProgress({
             </div>
             <p className="text-xs text-slate-400">{progress}%</p>
             {taskId && accept > 0 && sent < accept && (
-              <p className="text-xs text-slate-400">Доставка обновляется каждые 15 сек...</p>
+              <p className="text-xs text-slate-400">Доставка обновляется каждые 2 сек...</p>
             )}
           </div>
         )}

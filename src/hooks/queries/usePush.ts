@@ -42,14 +42,12 @@ export function useSendPush() {
         return pushAPI.sendAll({
           title: input.title,
           body: input.body,
-          deep_link: input.deep_link,
           image_url: input.image_url,
         });
       }
       return pushAPI.send({
         title: input.title,
         body: input.body,
-        deep_link: input.deep_link,
         image_url: input.image_url,
         patient_ids: input.patient_ids ?? [],
       });

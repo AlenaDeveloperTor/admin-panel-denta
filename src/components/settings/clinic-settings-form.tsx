@@ -11,6 +11,7 @@ import type { ClinicSettings } from '@/types/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/utils';
@@ -39,6 +40,7 @@ export function ClinicSettingsForm() {
     defaultValues: {
       name: '',
       phone: '',
+      timezone: 'Europe/Moscow',
       email: '',
       address: '',
       work_hours: '',
@@ -53,6 +55,7 @@ export function ClinicSettingsForm() {
       reset({
         name: settings.name ?? '',
         phone: settings.phone ?? '',
+        timezone: settings.timezone ?? 'Europe/Moscow',
         email: settings.email ?? '',
         address: settings.address ?? '',
         work_hours: settings.work_hours ?? '',
@@ -68,6 +71,7 @@ export function ClinicSettingsForm() {
       await save.mutateAsync({
         name: values.name,
         phone: values.phone,
+        timezone: values.timezone,
         email: values.email || undefined,
         address: values.address || undefined,
         work_hours: values.work_hours || undefined,
@@ -102,6 +106,26 @@ export function ClinicSettingsForm() {
               <Input label="Адрес" error={errors.address?.message} {...register('address')} />
             </div>
             <Input label="Часы работы" placeholder="Пн–Сб 9:00–20:00" error={errors.work_hours?.message} {...register('work_hours')} />
+            <Select
+              label="Часовой пояс клиники *"
+              error={errors.timezone?.message}
+              {...register('timezone')}
+              options={[
+                { value: 'Europe/Kaliningrad', label: 'Калининград (UTC+2)' },
+                { value: 'Europe/Moscow', label: 'Москва (UTC+3)' },
+                { value: 'Europe/Samara', label: 'Самара (UTC+4)' },
+                { value: 'Asia/Yekaterinburg', label: 'Екатеринбург (UTC+5)' },
+                { value: 'Asia/Omsk', label: 'Омск (UTC+6)' },
+                { value: 'Asia/Novosibirsk', label: 'Новосибирск (UTC+7)' },
+                { value: 'Asia/Barnaul', label: 'Барнаул (UTC+7)' },
+                { value: 'Asia/Krasnoyarsk', label: 'Красноярск (UTC+7)' },
+                { value: 'Asia/Irkutsk', label: 'Иркутск (UTC+8)' },
+                { value: 'Asia/Yakutsk', label: 'Якутск (UTC+9)' },
+                { value: 'Asia/Vladivostok', label: 'Владивосток (UTC+10)' },
+                { value: 'Asia/Magadan', label: 'Магадан (UTC+11)' },
+                { value: 'Asia/Kamchatka', label: 'Камчатка (UTC+12)' },
+              ]}
+            />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="Начисление баллов, %"

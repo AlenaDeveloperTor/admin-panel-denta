@@ -12,6 +12,13 @@ export interface LoyaltyTransaction {
   created_at: string;
 }
 
+export interface LoyaltyHistoryResponse {
+  items: LoyaltyTransaction[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 /** Входные данные ручного начисления/списания баллов */
 export interface AdjustLoyaltyInput {
   user_id: number;

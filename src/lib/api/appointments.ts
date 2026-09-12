@@ -15,4 +15,15 @@ export const appointmentsAPI = {
   /** Обновить статус записи: { status: 'confirmed' } */
   updateStatus: (id: string, status: AppointmentStatus) =>
     api.patch<Appointment>(`/appointments/${id}`, { status }),
+
+  /** Частичное обновление записи (PATCH /admin/appointments/{id}) */
+  update: (
+    id: string,
+    data: {
+      status?: AppointmentStatus;
+      appointment_datetime?: string;
+      service_id?: number | string;
+      comment?: string;
+    }
+  ) => api.patch<Appointment>(`/appointments/${id}`, data),
 };

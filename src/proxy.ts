@@ -30,7 +30,7 @@ const PROTECTED_PREFIXES = [
 ];
 
 /** Разделы только для роли admin (директор) */
-const ADMIN_ONLY_PREFIXES = ['/staff'];
+const ADMIN_ONLY_PREFIXES = ['/staff', '/settings'];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

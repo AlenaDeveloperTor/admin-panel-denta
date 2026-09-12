@@ -1,11 +1,13 @@
 'use client';
 
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 /**
  * Единый axios-инстанс для админки.
  * baseURL = '/admin-api' → Next.js rewrite проксирует в {ADMIN_API_BASE}/admin/...
  * withCredentials: true — куки (httpOnly access_token/refresh_token) шлются автоматически.
+ * Authorization: Bearer — токен берётся из Zustand store (in-memory) и подставляется в каждый запрос.
  */
 export const api = axios.create({
   baseURL: '/admin-api',
@@ -14,11 +16,25 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Логирование куков перед каждым запросом
+// Подставляем Bearer token перед каждым запросом
 api.interceptors.request.use((config) => {
-  const cookieStr = document.cookie;
-  const hasAccess = cookieStr.includes('access_token');
-  console.log('[client.ts request] URL:', config.url, '| Cookie access_token:', hasAccess ? '✅ есть' : '❌ нет');
+  let token = useAuthStore.getState().accessToken;
+  if (!token && typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('admin_auth_store');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token = parsed?.state?.accessToken ?? null;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  console.log('[client.ts request] URL:', config.url, '| Bearer token:', token ? '✅ есть' : '❌ нет');
   return config;
 });
 
@@ -30,11 +46,12 @@ let refreshPromise: Promise<boolean> | null = null;
 
 async function refreshSession(): Promise<boolean> {
   try {
-    // Используем BFF эндпоинт для обновления токена
-    // BFF видит httpOnly куки и может отправить refresh_token в body бэкенду
     console.log('[client.ts] Попытка обновить токен через /api/session/refresh (BFF)...');
-    console.log('[client.ts] Текущие куки:', document.cookie);
     const res = await axios.post('/api/session/refresh', undefined, { withCredentials: true });
+    // Если BFF вернул новый access_token — сохраняем в store
+    if (res.data?.access_token) {
+      useAuthStore.getState().setAccessToken(res.data.access_token);
+    }
     console.log('[client.ts] ✅ Токен обновлен через BFF. Статус:', res.status);
     return true;
   } catch (e) {
@@ -64,11 +81,12 @@ api.interceptors.response.use(
       const ok = await refreshPromise;
       if (ok) {
         console.log('[client.ts] 🔁 Повторяем запрос после обновления');
-        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms для видимости
+        await new Promise(resolve => setTimeout(resolve, 500));
         return api(original);
       }
       // Не удалось обновить сессию → на страницу входа
       console.log('[client.ts] 🚫 Не удалось обновить токен → перенаправляем на /login');
+      useAuthStore.getState().clear();
       if (typeof window !== 'undefined') {
         window.location.href = '/login?expired=1';
       }

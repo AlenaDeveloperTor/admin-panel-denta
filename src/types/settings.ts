@@ -2,6 +2,8 @@
 export interface ClinicSettings {
   name: string;
   phone: string;
+  /** Часовой пояс клиники в формате IANA */
+  timezone: string;
   email?: string;
   address?: string;
   work_hours?: string;

@@ -14,6 +14,7 @@ import { formatNumber } from '@/lib/utils';
 export default function RequestsPage() {
   const { data, isLoading, isFetching, refetch } = useRequests();
   const [selected, setSelected] = useState<Appointment | null>(null);
+  const [startEditing, setStartEditing] = useState(false);
 
   const requests = data?.items ?? [];
 
@@ -44,12 +45,19 @@ export default function RequestsPage() {
       <RequestsList
         requests={requests}
         loading={isLoading}
-        onSelect={(request) => setSelected(request)}
+        onSelect={(request, edit = false) => {
+          setSelected(request);
+          setStartEditing(edit);
+        }}
       />
 
       <RequestDetail
         requestId={selected ? String(selected.id) : null}
-        onClose={() => setSelected(null)}
+        startEditing={startEditing}
+        onClose={() => {
+          setSelected(null);
+          setStartEditing(false);
+        }}
       />
     </div>
   );

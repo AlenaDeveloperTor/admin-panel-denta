@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { appointmentSchema, type AppointmentFormValues } from '@/schemas/appointment';
 import { useCreateAppointment } from '@/hooks/queries/useAppointments';
+import { appointmentsAPI } from '@/lib/api/appointments';
 import { useServices } from '@/hooks/queries/useServices';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PatientSelect, type PatientOption } from './patient-select';
+import { pushAPI } from '@/lib/api/push';
+import { buildCreationPush } from '@/lib/push-message';
 import { getErrorMessage } from '@/lib/utils';
+import { clinicDatetimeToUTC } from '@/lib/utils';
+import { settingsAPI } from '@/lib/api/settings';
+import { useQuery } from '@tanstack/react-query';
+import type { Appointment } from '@/types/appointment';
 
 /** Приводит "YYYY-MM-DD" (из календаря) к datetime-local "YYYY-MM-DDTHH:mm" */
 function toDatetimeLocal(date?: string): string {
@@ -34,6 +41,11 @@ export function AppointmentFormModal({
 }) {
   const createAppointment = useCreateAppointment();
   const { data: services, isLoading: servicesLoading } = useServices();
+  const { data: clinicSettings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsAPI.get().then((response) => response.data),
+    retry: false,
+  });
   const [patient, setPatient] = useState<PatientOption | null>(null);
   const [patientError, setPatientError] = useState('');
 
@@ -46,10 +58,31 @@ export function AppointmentFormModal({
     formState: { errors },
   } = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
-    defaultValues: { appointment_datetime: toDatetimeLocal(defaultDate), comment: '' },
+    defaultValues: {
+      appointment_datetime: toDatetimeLocal(defaultDate),
+      comment: '',
+    },
   });
 
   const serviceId = watch('service_id');
+
+  /** Отправляем push пациенту (fire-and-forget: не блокируем при ошибке) */
+  async function sendCreationPush(appointment: Appointment) {
+    if (!patient?.id) return;
+    try {
+      const msg = buildCreationPush(appointment, clinicSettings?.timezone ?? 'Europe/Moscow');
+      await pushAPI.send({
+        title: msg.title,
+        body: msg.body,
+        patient_ids: [patient.id],
+      });
+      console.log('[push] Уведомление о записи отправлено пациенту', patient.id);
+    } catch (err) {
+      // Запись уже создана — ошибка пуша не критична
+      console.warn('[push] Не удалось отправить уведомление о записи:', err);
+      toast.warning('Запись создана, но уведомление не отправлено', { duration: 4000 });
+    }
+  }
 
   const onSubmit = async (values: AppointmentFormValues) => {
     if (!patient) {
@@ -58,13 +91,51 @@ export function AppointmentFormModal({
     }
     setPatientError('');
     try {
-      await createAppointment.mutateAsync({
-        user_id: patient.id,
+      const appointmentDatetime = clinicDatetimeToUTC(
+        values.appointment_datetime,
+        clinicSettings?.timezone ?? 'Europe/Moscow',
+      );
+      const res = await createAppointment.mutateAsync({
+        user_id: patient!.id,
         service_id: values.service_id,
-        appointment_datetime: new Date(values.appointment_datetime).toISOString(),
+        appointment_datetime: appointmentDatetime,
         comment: values.comment || undefined,
       });
-      toast.success('Запись создана');
+
+      const createdItem = res.data;
+      const createdId = createdItem?.id;
+
+      // Сразу подтверждаем запись, созданную админом, чтобы она была в Записях, а не Заявках
+      if (createdId) {
+        try {
+          await appointmentsAPI.updateStatus(String(createdId), 'confirmed');
+        } catch (statusErr) {
+          console.warn('[appointments] Не удалось перевести статус в confirmed:', statusErr);
+        }
+      }
+
+      // Строим объект Appointment для генерации текста пуша
+      const selectedService = services?.find((s) => s.id === values.service_id);
+      const appointmentForPush: Appointment = {
+        ...(createdItem ?? {}),
+        id: (createdItem as Appointment)?.id ?? '',
+        service_id: values.service_id,
+        service: selectedService ?? null,
+        status: 'confirmed',
+        appointment_datetime: appointmentDatetime,
+        patient: {
+          id: patient.id,
+          first_name: patient.name.split(' ')[1] ?? patient.name.split(' ')[0] ?? '',
+          last_name: patient.name.split(' ')[0] ?? '',
+          phone: patient.phone,
+          loyalty_balance: 0,
+        },
+      };
+
+      // Отправляем пуш параллельно с закрытием формы
+      void sendCreationPush(appointmentForPush);
+
+      toast.success('Запись создана, уведомление отправлено');
       close();
     } catch (e) {
       toast.error(getErrorMessage(e));
@@ -103,9 +174,15 @@ export function AppointmentFormModal({
           <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Пациент *
           </span>
-          <PatientSelect value={patient} onChange={(p) => setPatient(p)} />
-          {(patientError || errors.user_id) && (
-            <p className="mt-1 text-xs text-rose-500">{patientError || errors.user_id?.message}</p>
+          <PatientSelect
+            value={patient}
+            onChange={(p) => {
+              setPatient(p);
+              if (p) setPatientError('');
+            }}
+          />
+          {patientError && (
+            <p className="mt-1 text-xs text-rose-500">{patientError}</p>
           )}
         </div>
 
