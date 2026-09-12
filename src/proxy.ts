@@ -5,10 +5,10 @@ import { jwtVerify, decodeJwt } from 'jose';
  * Защита роутов админки (Next.js 16: файл называется proxy.ts, ранее middleware.ts).
  *
  * Правила (ТЗ §1.2):
- *  - доступ к /dashboard, /patients, /appointments, /services, /settings и др.
+ *  - доступ к /patients, /appointments, /services, /settings и др.
  *    только с валидным JWT и ролью admin в payload;
  *  - иначе — редирект на /login;
- *  - авторизованный пользователь на /login перенаправляется на /dashboard.
+ *  - авторизованный пользователь на /login перенаправляется на /appointments.
  *
  * Проверка подписи:
  *  - если задан JWT_SECRET — токен проверяется подписью через jose;
@@ -17,7 +17,6 @@ import { jwtVerify, decodeJwt } from 'jose';
  */
 
 const PROTECTED_PREFIXES = [
-  '/dashboard',
   '/patients',
   '/requests',
   '/appointments',
@@ -79,14 +78,14 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Разделы только для admin: остальных перенаправляем на дашборд
+  // Разделы только для admin: остальных перенаправляем к записям
   if (isAdminOnlyPath(pathname) && !isAdmin) {
-    const url = new URL('/dashboard', req.url);
+    const url = new URL('/appointments', req.url);
     return NextResponse.redirect(url);
   }
 
   if (isLogin && isStaff) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/appointments', req.url));
   }
 
   return NextResponse.next();

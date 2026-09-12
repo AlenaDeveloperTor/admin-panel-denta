@@ -37,7 +37,6 @@ export function useAppointment(id: string | null) {
   });
 }
 
-/** Последние записи для дашборда */
 export function useRecentAppointments(limit = 5) {
   return useQuery({
     queryKey: ['appointments', 'recent', limit],

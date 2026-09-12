@@ -11,10 +11,10 @@ export default function NotFound() {
         </p>
       </div>
       <Link
-        href="/dashboard"
+        href="/appointments"
         className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
       >
-        Вернуться на дашборд
+        Вернуться к записям
       </Link>
     </div>
   );

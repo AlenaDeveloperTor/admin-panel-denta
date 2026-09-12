@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import {
   CalendarDays,
   Inbox,
-  LayoutDashboard,
   Megaphone,
   Send,
   Settings,
@@ -29,7 +28,6 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Дашборд', icon: <LayoutDashboard className="h-5 w-5" /> },
   { href: '/patients', label: 'Пациенты', icon: <Users className="h-5 w-5" /> },
   { href: '/staff', label: 'Сотрудники', icon: <UserCog className="h-5 w-5" /> },
   { href: '/requests', label: 'Заявки', icon: <Inbox className="h-5 w-5" /> },
@@ -76,8 +74,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
             (item.href !== '/staff' || canManageStaff) &&
             (item.href !== '/settings' || canManageSettings),
         ).map((item) => {
-          const active =
-            pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}

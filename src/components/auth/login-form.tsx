@@ -62,7 +62,7 @@ export function LoginForm() {
       if (data?.user) setUser(data.user);
 
       toast.success('Добро пожаловать!');
-      router.push('/dashboard');
+      router.push('/appointments');
       router.refresh();
     } catch (e) {
       toast.error(getErrorMessage(e, 'Неверный email или пароль'));

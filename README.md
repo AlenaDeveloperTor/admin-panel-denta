@@ -39,7 +39,6 @@ npm run dev                  # http://localhost:3000
 |---|---|---|
 | Авторизация (email + пароль, httpOnly-куки, авто-refresh) | `/login` | ✅ |
 | Защита роутов + проверка роли `admin` | `proxy.ts` (Next 16, ранее middleware) | ✅ |
-| Дашборд: KPI-карточки, график Recharts, последние записи | `/dashboard` | ✅ |
 | Пациенты: таблица, поиск (debounce 500ms), фильтры, пагинация, CRUD | `/patients` | ✅ |
 | Записи: список + календарь FullCalendar, фильтры (дата/врач/статус), смена статуса, создание, экспорт CSV, «Написать пациенту» | `/appointments` | ✅ |
 | Услуги: CRUD, загрузка изображения (dropzone), активность | `/services` | ✅ |
@@ -58,8 +57,6 @@ POST   /admin/auth/logout
 POST   /admin/auth/refresh        # обновление кук
 GET    /admin/auth/me             # текущий администратор
 GET    /admin/auth/sessions       # журнал входов/выходов (ТЗ §1.2)
-GET    /admin/dashboard/stats     # KPI
-GET    /admin/dashboard/chart     # точки графика { points: [{date, count}] }
 GET    /admin/users               # ?page=&limit=&search=&has_points=&date_from=
 POST   /admin/users               # { first_name, last_name, phone, email }
 PATCH  /admin/users/{id}
