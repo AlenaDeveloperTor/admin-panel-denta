@@ -9,10 +9,12 @@ export function ImageDropzone({
   value,
   onChange,
   uploading,
+  onFile,
 }: {
   value?: string;
   onChange: (url: string) => void;
   uploading?: boolean;
+  onFile?: (file: File) => void | Promise<void>;
 }) {
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -23,9 +25,10 @@ export function ImageDropzone({
       // Показываем локальный превью, пока грузится на сервер
       const objectUrl = URL.createObjectURL(file);
       setPreview(objectUrl);
-      onChange(''); // сбросим старый URL до загрузки
+      onChange('');
+      void onFile?.(file);
     },
-    [onChange],
+    [onChange, onFile],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

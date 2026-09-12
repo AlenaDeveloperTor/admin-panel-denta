@@ -43,12 +43,14 @@ export function useSendPush() {
           title: input.title,
           body: input.body,
           image_url: input.image_url,
+          banner_id: input.banner_id,
         });
       }
       return pushAPI.send({
         title: input.title,
         body: input.body,
         image_url: input.image_url,
+        banner_id: input.banner_id,
         patient_ids: input.patient_ids ?? [],
       });
     },

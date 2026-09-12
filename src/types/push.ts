@@ -14,6 +14,8 @@ export interface PushSendInput {
   category?: PushCategory;
   /** URL изображения (опционально) */
   image_url?: string;
+  /** id выбранного баннера из GET /admin/banners */
+  banner_id?: number;
   /** all — всем пациентам (send-all), users — по списку patient_ids (send) */
   target: PushTarget;
   /** id пациентов для target='users' (персональная рассылка) */
@@ -62,6 +64,7 @@ export interface PushDraft {
   body: string;
   category: PushCategory;
   image_url?: string;
+  banner_id?: number;
   target: PushTarget;
   phones: string[];
   patient_ids: number[];

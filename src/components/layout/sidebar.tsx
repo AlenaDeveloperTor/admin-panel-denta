@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   CalendarDays,
+  Image,
   Inbox,
   Megaphone,
   Send,
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/news', label: 'Акции и новости', icon: <Megaphone className="h-5 w-5" />, soon: true },
   { href: '/loyalty', label: 'Лояльность', icon: <Star className="h-5 w-5" /> },
   { href: '/push', label: 'Push-рассылка', icon: <Send className="h-5 w-5" /> },
+  { href: '/banners', label: 'Баннеры', icon: <Image className="h-5 w-5" /> },
   { href: '/settings', label: 'Настройки', icon: <Settings className="h-5 w-5" /> },
 ];
 
