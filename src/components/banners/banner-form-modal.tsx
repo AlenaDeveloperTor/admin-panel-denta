@@ -21,13 +21,13 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
   const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
-    defaultValues: { title: '', subtitle: '', image_url: '', button_text: '', bg_color: '#EAF4FF', is_active: true, sort_order: 0 },
+    defaultValues: { title: '', subtitle: '', image_url: '', button_text: '', button_url: undefined, bg_color: '#EAF4FF', is_active: true, sort_order: 0 },
   });
 
   useEffect(() => {
     if (open) reset({
       title: banner?.title ?? '', subtitle: banner?.subtitle ?? '', image_url: banner?.image_url ?? '',
-      button_text: banner?.button_text ?? '', bg_color: banner?.bg_color ?? '#EAF4FF',
+      button_text: banner?.button_text ?? '', button_url: banner?.button_url ?? undefined, bg_color: banner?.bg_color ?? '#EAF4FF',
       is_active: banner?.is_active ?? true, sort_order: banner?.sort_order ?? 0,
     });
   }, [banner, open, reset]);
@@ -80,8 +80,11 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
           />
           <ImageDropzone value={imageUrl} uploading={uploading} onChange={(url) => setValue('image_url', url, { shouldValidate: true })} onFile={handleImage} />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Input label="Текст кнопки" placeholder="Подробнее" {...register('button_text')} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input label="Текст кнопки" placeholder="Подробнее" error={errors.button_text?.message} {...register('button_text')} />
+          <Input label="Ссылка кнопки (URL)" placeholder="https://example.com/appointment" error={errors.button_url?.message} {...register('button_url')} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Цвет фона" placeholder="#EAF4FF" error={errors.bg_color?.message} {...register('bg_color')} />
           <Input label="Порядок" type="number" min={0} error={errors.sort_order?.message} {...register('sort_order')} />
         </div>
