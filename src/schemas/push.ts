@@ -10,7 +10,6 @@ export const pushSchema = z.object({
     .optional()
     .or(z.literal(''))
     .transform((v) => v || undefined),
-  banner_id: z.coerce.number().int().positive().optional().or(z.literal('').transform(() => undefined)),
 });
 
 export type PushFormValues = z.infer<typeof pushSchema>;

@@ -9,7 +9,7 @@ import { api } from './client';
  */
 export const pushAPI = {
   /** Массовая рассылка всем пациентам */
-  sendAll: (input: { title: string; body: string; image_url?: string; banner_id?: number }) =>
+  sendAll: (input: { title: string; body: string; image_url?: string }) =>
     api.post<{ task_id?: string; success?: boolean }>('/push/send-all', input),
 
   /** Персональная/выборочная рассылка по id пациентов */
@@ -17,7 +17,6 @@ export const pushAPI = {
     title: string;
     body: string;
     image_url?: string;
-    banner_id?: number;
     patient_ids: number[];
   }) => api.post<{ task_id?: string; success?: boolean }>('/push/send', input),
 

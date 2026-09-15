@@ -18,7 +18,6 @@ import { PushSendProgress } from '@/components/push/push-send-progress';
 import { PatientPicker } from '@/components/push/patient-picker';
 import { pushSchema, type PushFormValues, isValidPushPhone, normalizePushPhone } from '@/schemas/push';
 import { useSendPush } from '@/hooks/queries/usePush';
-import { useBanners } from '@/hooks/queries/useBanners';
 import { getPushDrafts, savePushDraft, deletePushDraft } from '@/lib/push-drafts';
 import { resolvePhonesToUserIds } from '@/lib/push-resolve';
 import type { PushDraft, PushTarget } from '@/types/push';
@@ -33,7 +32,6 @@ const TARGET_OPTIONS: { value: PushTarget; title: string; description: string }[
 
 export default function PushPage() {
   const sendPush = useSendPush();
-  const { data: banners, isLoading: bannersLoading } = useBanners(true);
   const [target, setTarget] = useState<PushTarget>('all');
   const [phones, setPhones] = useState<string[]>([]);
   const [phoneInput, setPhoneInput] = useState('');
@@ -45,13 +43,12 @@ export default function PushPage() {
     register,
     handleSubmit,
     reset,
-    setValue,
     getValues,
     watch,
     formState: { errors },
   } = useForm<PushFormValues>({
     resolver: zodResolver(pushSchema),
-    defaultValues: { category: 'system', title: '', body: '', image_url: '', banner_id: undefined },
+    defaultValues: { category: 'system', title: '', body: '', image_url: '' },
   });
 
   const formValues = watch();
@@ -108,7 +105,6 @@ export default function PushPage() {
       title: values.title,
       body: values.body,
       image_url: values.image_url ?? '',
-      banner_id: values.banner_id,
       target,
       phones,
       patient_ids: patients.map((p) => p.id),
@@ -124,7 +120,6 @@ export default function PushPage() {
       title: draft.title,
       body: draft.body,
       image_url: draft.image_url || '',
-      banner_id: draft.banner_id,
     });
     setTarget(draft.target);
     setPhones(draft.phones);
@@ -174,7 +169,6 @@ export default function PushPage() {
         title: values.title,
         body: values.body,
         image_url: values.image_url,
-        banner_id: values.banner_id,
         target: target === 'all' ? 'all' : 'users',
         patient_ids: patientIds,
       });
@@ -184,7 +178,7 @@ export default function PushPage() {
       } else {
         toast.success('Рассылка отправлена');
       }
-      reset({ category: 'system', title: '', body: '', image_url: '', banner_id: undefined });
+      reset({ category: 'system', title: '', body: '', image_url: '' });
       setPhones([]);
       setPatients([]);
       setTarget('all');
@@ -308,17 +302,15 @@ export default function PushPage() {
               error={errors.body?.message}
               {...register('body')}
             />
-            <Select
-              label="Баннер из библиотеки"
-              placeholder={bannersLoading ? 'Загрузка баннеров…' : 'Без баннера'}
-              options={(banners ?? []).map((banner) => ({ value: String(banner.id), label: banner.title }))}
-              {...register('banner_id')}
-              onChange={(event) => {
-                const banner = banners?.find((item) => item.id === Number(event.target.value));
-                register('banner_id').onChange(event);
-                setValue('image_url', banner?.image_url ?? '');
-              }}
-            />
+            <div>
+              <Input
+                label="Изображение (URL)"
+                placeholder="https://…/banner.jpg"
+                hint="Опционально, для акций"
+                error={errors.image_url?.message}
+                {...register('image_url')}
+              />
+            </div>
 
             <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={handleSaveDraft} type="button">
