@@ -46,9 +46,9 @@ export interface PushTaskStatus {
   task_id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'sent' | 'partial' | 'failed';
   total: number;
-  /** Сколько отправлено в API Expo (сразу после отправки) */
-  accept: number;
-  /** Сколько реально доставлено (заполняется асинхронно через 15 сек) */
+  /** Принято к отправке через Expo (поле "accepted" в ответе бэкенда) */
+  accepted: number;
+  /** Сколько реально доставлено пользователям */
   sent: number;
   failed: number;
   /** 0..100 */

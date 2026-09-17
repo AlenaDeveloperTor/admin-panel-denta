@@ -7,7 +7,7 @@ export interface TabItem {
   value: string;
   label: string;
   icon?: ReactNode;
-  /** Счётчик справа от ярлыка (напр. число новых заявок) */
+  /** Счётчик справа от ярлыка */
   badge?: number;
 }
 
@@ -25,7 +25,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        'inline-flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900',
+        'inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#ece7df] bg-white p-1 dark:border-slate-700 dark:bg-slate-900',
         className,
       )}
     >
@@ -36,10 +36,10 @@ export function Tabs({
             key={tab.value}
             onClick={() => onChange(tab.value)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
               active
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200',
+                ? 'bg-[#172933] text-white shadow-sm'
+                : 'text-slate-500 hover:bg-[#eef4fb] hover:text-[#172933] dark:hover:text-slate-200',
             )}
           >
             {tab.icon}
@@ -48,7 +48,7 @@ export function Tabs({
               <span
                 className={cn(
                   'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                  active ? 'bg-white/20 text-white' : 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300',
+                  active ? 'bg-white/20 text-white' : 'bg-[#eef4fb] text-[#172933]',
                 )}
               >
                 {tab.badge}

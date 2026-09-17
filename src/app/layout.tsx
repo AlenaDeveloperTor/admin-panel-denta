@@ -7,10 +7,10 @@ import { ThemeProvider, THEME_INIT_SCRIPT } from '@/providers/theme-provider';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Админ-панель · Стоматология «Улыбка»',
-    template: '%s · Админ-панель',
+    default: 'Админ-панель · labsmilê',
+    template: '%s · labsmilê Админ',
   },
-  description: 'Панель управления стоматологической клиникой «Улыбка»',
+  description: 'Панель управления стоматологической клиникой labsmilê',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

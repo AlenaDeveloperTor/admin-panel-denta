@@ -61,7 +61,7 @@ export function LoginForm() {
 
       if (data?.user) setUser(data.user);
 
-      toast.success('Добро пожаловать!');
+      toast.success('Добро пожаловать в labsmilê! 🦷');
       router.push('/appointments');
       router.refresh();
     } catch (e) {
@@ -73,20 +73,25 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
+      {/* Заголовок */}
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white">
+        <div
+          className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
+          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+        >
           🦷
         </div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Стоматология «Улыбка»</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Вход в панель управления</p>
+        <h1 className="text-xl font-semibold text-white">labsmilê</h1>
+        <p className="mt-1 text-sm font-medium text-white/90">Панель управления</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {/* Карточка формы */}
+      <div className="rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur-sm border border-white/50">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <Input
             label="Email"
             type="email"
-            placeholder="admin@clinic.ru"
+            placeholder="admin@labsmile22.ru"
             autoComplete="email"
             error={errors.email?.message}
             {...register('email')}
@@ -101,7 +106,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-[#aac6ee] hover:text-[#172933] dark:hover:text-slate-200"
                 aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -115,9 +120,8 @@ export function LoginForm() {
         </form>
       </div>
 
-      <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
+      <p className="mt-6 text-center text-xs leading-relaxed text-white/90">
         Доступ только для сотрудников клиники с ролью администратора.
-        <br />Вход и выход фиксируются в журнале безопасности.
       </p>
     </div>
   );

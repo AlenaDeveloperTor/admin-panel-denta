@@ -14,14 +14,15 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
+  /** Основная кнопка — тёмно-синий фон с белым текстом */
   primary:
-    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300 dark:disabled:bg-brand-800 shadow-sm',
+    'bg-[#172933] text-white hover:bg-[#111f27] active:bg-[#0c161c] disabled:bg-[#172933]/40 shadow-sm',
   secondary:
-    'bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
+    'bg-[#eef4fb] text-[#172933] hover:bg-[#daeaf8] dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
   outline:
-    'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
+    'border border-[#d0c8b5] bg-white text-[#172933] hover:bg-[#eef4fb] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
   ghost:
-    'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+    'text-[#172933] hover:bg-[#eef4fb] hover:text-[#172933] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
   danger:
     'bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 disabled:bg-rose-300 shadow-sm',
 };
@@ -39,7 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-60',
+        'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#aac6ee] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-60',
         variants[variant],
         sizes[size],
         className,

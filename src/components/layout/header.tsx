@@ -24,7 +24,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout.mutateAsync();
-    toast.success('Вы вышли из системы');
+    toast.success('До встречи! 👋');
     router.push('/login');
     router.refresh();
   };
@@ -39,7 +39,7 @@ export function Header() {
     : 'A';
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-[#ece7df] bg-white/95 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Открыть меню">
         <Menu className="h-5 w-5" />
       </Button>
@@ -59,21 +59,26 @@ export function Header() {
         {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </Button>
 
-      <div className="flex items-center gap-2 rounded-full border border-slate-200 py-1 pl-1 pr-3 dark:border-slate-800">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+      {/* Профиль-пилюля */}
+      <div className="flex items-center gap-2 rounded-full border border-[#d0c8b5] py-1 pl-1 pr-3 dark:border-slate-700">
+        {/* Аватар с градиентом */}
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-[#172933]"
+          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+        >
           {initials}
         </div>
         <div className="hidden text-left sm:block">
-          <p className="max-w-35 truncate text-sm font-medium leading-tight text-slate-900 dark:text-slate-100">
+          <p className="max-w-35 truncate text-sm font-medium leading-tight text-[#172933] dark:text-slate-100">
             {user?.name ?? 'Администратор'}
           </p>
-          <p className="text-[11px] capitalize leading-tight text-slate-400">{user?.role ?? 'admin'}</p>
+          <p className="text-[11px] capitalize leading-tight text-slate-500 dark:text-[#aac6ee]">{user?.role ?? 'admin'}</p>
         </div>
         <button
           onClick={handleLogout}
           disabled={logout.isPending}
           className={cn(
-            'ml-1 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30',
+            'ml-1 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/30',
             logout.isPending && 'opacity-50',
           )}
           aria-label="Выйти"

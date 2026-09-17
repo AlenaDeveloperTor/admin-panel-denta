@@ -48,11 +48,11 @@ export function DataTable<T>({
       <table className="w-full min-w-max text-sm">
         <thead>
           {table.getHeaderGroups().map((hg) => (
-            <tr key={hg.id} className="border-b border-slate-100 dark:border-slate-800">
+            <tr key={hg.id} className="border-b border-[#ece7df] dark:border-slate-800">
               {hg.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   {header.isPlaceholder
                     ? null
@@ -68,13 +68,13 @@ export function DataTable<T>({
               key={row.id}
               onClick={() => onRowClick?.(row.original)}
               className={cn(
-                'border-b border-slate-50 transition-colors last:border-0 dark:border-slate-800/60',
-                onRowClick && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40',
+                'border-b border-[#ece7df]/60 transition-colors last:border-0 dark:border-slate-800/60',
+                onRowClick && 'cursor-pointer hover:bg-[#eef4fb] dark:hover:bg-slate-800/40',
                 rowClassName?.(row.original),
               )}
             >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-3 align-middle text-slate-700 dark:text-slate-300">
+                <td key={cell.id} className="px-4 py-3 align-middle text-[#172933] dark:text-slate-300">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

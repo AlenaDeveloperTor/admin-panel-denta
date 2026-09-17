@@ -9,7 +9,7 @@ import { useUIStore } from '@/stores/useUIStore';
 function ShellInner({ children }: { children: ReactNode }) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-[#f8f6f3] dark:bg-slate-950">
       <RequestsWatcher />
       <Sidebar />
       <div className={collapsed ? 'lg:pl-16' : 'lg:pl-60'}>

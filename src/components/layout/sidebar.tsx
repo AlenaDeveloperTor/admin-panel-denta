@@ -58,19 +58,25 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
 
   return (
     <div className="flex h-full flex-col">
-      <div className={cn('flex h-16 items-center gap-3 border-b border-slate-200 px-4 dark:border-slate-800', collapsed && 'justify-center px-2')}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-lg text-white">
+      {/* Логотип labsmile */}
+      <div className={cn('flex h-16 items-center gap-3 border-b border-[#ece7df] px-4 dark:border-slate-800', collapsed && 'justify-center px-2')}>
+        {/* Иконка-зуб на градиентной плашке */}
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
+          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+        >
           🦷
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">Стоматология</p>
-            <p className="truncate text-[11px] text-slate-400">«Улыбка» · Админ</p>
+            <p className="truncate text-sm font-medium tracking-wide text-[#172933] dark:text-slate-100">
+              labsmilê
+            </p>
           </div>
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {NAV_ITEMS.filter(
           (item) =>
             (item.href !== '/staff' || canManageStaff) &&
@@ -84,10 +90,10 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
               onClick={onNavigate}
               title={collapsed ? item.label : undefined}
               className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
                 active
-                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+                  ? 'bg-[#172933] text-white dark:bg-[#aac6ee]/20 dark:text-[#aac6ee]'
+                  : 'text-slate-600 hover:bg-[#eef4fb] hover:text-[#172933] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
                 collapsed && 'justify-center px-2',
               )}
             >
@@ -96,7 +102,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
                 <>
                   <span className="flex-1 truncate">{item.label}</span>
                   {item.soon && (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                    <span className="rounded-full bg-[#d0c8b5] px-1.5 py-0.5 text-[10px] font-medium text-[#172933]">
                       скоро
                     </span>
                   )}
@@ -112,10 +118,10 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
         })}
       </nav>
 
-      <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+      <div className="border-t border-[#ece7df] p-3 dark:border-slate-800">
         {!collapsed && (
           <p className="px-3 text-[11px] leading-relaxed text-slate-400">
-            Панель управления стоматологической клиникой
+            labsmilê · Панель управления
           </p>
         )}
       </div>
@@ -133,7 +139,7 @@ export function Sidebar() {
       {/* Desktop */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 hidden border-r border-slate-200 bg-white transition-[width] duration-200 lg:block dark:border-slate-800 dark:bg-slate-950',
+          'fixed inset-y-0 left-0 z-30 hidden border-r border-[#ece7df] bg-white transition-[width] duration-200 lg:block dark:border-slate-800 dark:bg-slate-950',
           collapsed ? 'w-16' : 'w-60',
         )}
       >
@@ -143,11 +149,11 @@ export function Sidebar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-[#172933]/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl dark:bg-slate-950">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-4 rounded-md p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="absolute right-3 top-4 rounded-full p-1 text-slate-400 hover:bg-[#eef4fb] dark:hover:bg-slate-800"
               aria-label="Закрыть меню"
             >
               <X className="h-5 w-5" />

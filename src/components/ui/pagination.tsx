@@ -23,7 +23,7 @@ export function Pagination({
     <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
       {total !== undefined && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Всего: <span className="font-medium text-slate-700 dark:text-slate-200">{total}</span>
+          Всего: <span className="font-medium text-[#172933] dark:text-slate-200">{total}</span>
         </p>
       )}
       <div className="flex items-center gap-1">
@@ -48,8 +48,8 @@ export function Pagination({
               className={cn(
                 'h-8 min-w-8 rounded-lg px-2 text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-brand-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                  ? 'bg-[#172933] text-white'
+                  : 'text-[#172933] hover:bg-[#eef4fb] dark:text-slate-300 dark:hover:bg-slate-800',
               )}
             >
               {p}

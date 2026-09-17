@@ -11,7 +11,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900',
+        'rounded-2xl border border-[#ece7df] bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900',
         className,
       )}
     >
@@ -32,9 +32,9 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800', className)}>
+    <div className={cn('flex items-start justify-between gap-4 border-b border-[#ece7df] px-5 py-4 dark:border-slate-800', className)}>
       <div>
-        {title && <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>}
+        {title && <h3 className="text-sm font-medium text-[#172933] dark:text-slate-100">{title}</h3>}
         {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
       </div>
       {action}
