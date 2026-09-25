@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const bannerSchema = z.object({
   title: z.string().min(1, 'Укажите заголовок').max(120, 'Максимум 120 символов'),
   subtitle: z.string().max(240, 'Максимум 240 символов'),
-  image_url: z.string().min(1, 'Загрузите изображение'),
+  // image_url может быть пустым при режиме «Загрузить файл» — проверка в onSubmit
+  image_url: z.string().optional().default(''),
   button_text: z.string().max(60, 'Максимум 60 символов'),
   button_url: z
     .string()

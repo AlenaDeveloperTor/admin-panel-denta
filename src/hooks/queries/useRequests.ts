@@ -28,7 +28,12 @@ function mergePageResults(a: PageResult<Appointment>, b: PageResult<Appointment>
 /**
  * Новые заявки на запись от клиентов (статус pending/created).
  * Бэкенд принимает заявку из мобильного приложения → админ видит её здесь.
- * Автообновление каждые 30 секунд + по refetchOnWindowFocus.
+ * Автообновление каждые 60 секунд.
+ *
+ * retry: 1      — при ошибке только 1 повтор (дефолт 3), иначе при ECONNABORTED
+ *                 появляется шквал запросов каждые несколько секунд.
+ * retryDelay    — пауза перед повтором 10 с.
+ * refetchOnWindowFocus: false — не перезапрашивать при каждом переключении вкладки.
  */
 export function useRequests() {
   return useQuery({
@@ -38,7 +43,10 @@ export function useRequests() {
       const createdRes = await appointmentsAPI.list({ source: 'client', status: 'created', limit: 50 });
       return normalizePage<Appointment>(createdRes.data, 1, 50);
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,          // раз в 60 сек — снижаем нагрузку на бэкенд
+    refetchOnWindowFocus: false,       // не дублировать запрос при фокусе вкладки
+    retry: 1,                          // 1 повтор при ошибке (вместо дефолтных 3)
+    retryDelay: 10_000,                // пауза 10 с перед повтором
     placeholderData: (prev) => prev,
   });
 }
