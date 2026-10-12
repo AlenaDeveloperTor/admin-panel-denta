@@ -18,46 +18,35 @@ export const api = axios.create({
 
 // Подставляем Bearer token перед каждым запросом
 api.interceptors.request.use((config) => {
-  let token = useAuthStore.getState().accessToken;
-  if (!token && typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem('admin_auth_store');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        token = parsed?.state?.accessToken ?? null;
-      }
-    } catch {
-      // ignore
-    }
-  }
+  const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers = config.headers ?? {};
     config.headers['Authorization'] = `Bearer ${token}`;
   }
-  console.log('[client.ts request] URL:', config.url, '| Bearer token:', token ? '✅ есть' : '❌ нет');
   return config;
 });
 
-
 type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
-/** Гарантируем один «полёт» refresh-запроса одновременно (single-flight) */
-let refreshPromise: Promise<boolean> | null = null;
+/**
+ * Single-flight refresh: пока идёт один запрос на обновление,
+ * все параллельные 401 ждут его результата — и НЕ запускают свой.
+ * Promise не обнуляется до тех пор, пока все ожидающие не получили результат.
+ */
+let refreshPromise: Promise<string | null> | null = null;
 
-async function refreshSession(): Promise<boolean> {
-  try {
-    console.log('[client.ts] Попытка обновить токен через /api/session/refresh (BFF)...');
-    const res = await axios.post('/api/session/refresh', undefined, { withCredentials: true });
-    // Если BFF вернул новый access_token — сохраняем в store
-    if (res.data?.access_token) {
-      useAuthStore.getState().setAccessToken(res.data.access_token);
-    }
-    console.log('[client.ts] ✅ Токен обновлен через BFF. Статус:', res.status);
-    return true;
-  } catch (e) {
-    console.log('[client.ts] ❌ BFF refresh не прошел. Статус:', (e as AxiosError)?.response?.status, 'Сообщение:', (e as AxiosError)?.message);
-    return false;
+async function refreshSession(): Promise<string | null> {
+  const res = await axios.post<{ ok: boolean; access_token?: string }>(
+    '/api/session/refresh',
+    undefined,
+    { withCredentials: true }
+  );
+  // BFF возвращает новый access_token в теле
+  const newToken = res.data?.access_token ?? null;
+  if (newToken) {
+    useAuthStore.getState().setAccessToken(newToken);
   }
+  return newToken;
 }
 
 api.interceptors.response.use(
@@ -70,28 +59,38 @@ api.interceptors.response.use(
     const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh');
     const shouldRetry = status === 401 && original && !original._retry && !isAuthCall;
 
-    if (shouldRetry) {
-      console.log('[client.ts] 🔄 401 ошибка на:', url, '— пытаемся обновить токен...');
-      original._retry = true;
-      if (!refreshPromise) {
-        refreshPromise = refreshSession().finally(() => {
-          refreshPromise = null;
-        });
+    if (!shouldRetry) {
+      return Promise.reject(error);
+    }
+
+    // Помечаем сразу — чтобы параллельные запросы, ожидающие того же refreshPromise,
+    // не пытались запустить ещё один refresh после того как первый завершился
+    original._retry = true;
+
+    if (!refreshPromise) {
+      refreshPromise = refreshSession().finally(() => {
+        refreshPromise = null;
+      });
+    }
+
+    try {
+      const newToken = await refreshPromise;
+
+      // Явно проставляем свежий токен в заголовок повторного запроса,
+      // не полагаясь на то, что request interceptor успеет прочитать store
+      if (newToken) {
+        original.headers = original.headers ?? {};
+        original.headers['Authorization'] = `Bearer ${newToken}`;
       }
-      const ok = await refreshPromise;
-      if (ok) {
-        console.log('[client.ts] 🔁 Повторяем запрос после обновления');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return api(original);
-      }
-      // Не удалось обновить сессию → на страницу входа
-      console.log('[client.ts] 🚫 Не удалось обновить токен → перенаправляем на /login');
+
+      return api(original);
+    } catch {
+      // Refresh не удался — сессия невалидна, выкидываем на логин
       useAuthStore.getState().clear();
       if (typeof window !== 'undefined') {
         window.location.href = '/login?expired=1';
       }
+      return Promise.reject(error);
     }
-
-    return Promise.reject(error);
   }
 );

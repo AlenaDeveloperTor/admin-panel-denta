@@ -17,11 +17,8 @@ export async function POST(req: NextRequest) {
   const base = process.env.ADMIN_API_BASE ?? 'http://localhost:8000';
   const cookieHeader = req.headers.get('cookie') ?? '';
   const refreshToken = req.cookies.get('refresh_token')?.value;
-  
-  console.log('[/api/session/refresh] Запрос на обновление токена. Cookie:', cookieHeader ? 'есть' : 'нет', '| Refresh token:', refreshToken ? '✅' : '❌');
 
   if (!refreshToken) {
-    console.log('[/api/session/refresh] ❌ Нет refresh_token в куках!');
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
@@ -36,12 +33,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!backendRes.ok) {
-      console.log('[/api/session/refresh] Ошибка от бэкенда:', backendRes.status);
       return NextResponse.json({ ok: false }, { status: 401 });
     }
 
     const data = await backendRes.json().catch(() => ({}));
-    console.log('[/api/session/refresh] Успешно! Токены получены:', { access: !!data.access_token, refresh: !!data.refresh_token });
     const out = NextResponse.json({ ok: true, access_token: data.access_token ?? null });
 
     // Пробрасываем Set-Cookie от бэкенда
@@ -59,8 +54,7 @@ export async function POST(req: NextRequest) {
     if (body.refresh_token) out.cookies.set('refresh_token', body.refresh_token, COOKIE_OPTIONS);
 
     return out;
-  } catch (err) {
-    console.log('[/api/session/refresh] Исключение:', err instanceof Error ? err.message : err);
+  } catch {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 }
