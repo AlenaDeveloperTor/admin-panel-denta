@@ -1,5 +1,5 @@
 /** Целевая аудитория push-рассылки (UI). Для API бэкенда: all | users */
-export type PushTarget = 'all' | 'users' | 'phones';
+export type PushTarget = 'all' | 'users' | 'phones' | 'birth_year' | 'ident_import';
 export type PushCategory = 'promo' | 'system' | 'info';
 
 /** Статус рассылки в истории */
@@ -65,6 +65,15 @@ export interface PushDraft {
   target: PushTarget;
   phones: string[];
   patient_ids: number[];
+  birth_year_filter?: {
+    mode: 'range' | 'exact' | 'age';
+    yearFrom?: number;
+    yearTo?: number;
+    exactYear?: number;
+    ageFrom?: number;
+    ageTo?: number;
+  };
+  ident_raw?: string;
   saved_at: string;
 }
 

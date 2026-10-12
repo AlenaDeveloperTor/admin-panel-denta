@@ -4,7 +4,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Save, Send, Trash2, Users } from 'lucide-react';
+import {
+  Calendar,
+  FileSpreadsheet,
+  Loader2,
+  Save,
+  Send,
+  Sparkles,
+  Trash2,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,22 +26,56 @@ import { PushPreview } from '@/components/push/push-preview';
 import { PushHistory } from '@/components/push/push-history';
 import { PushSendProgress } from '@/components/push/push-send-progress';
 import { PatientPicker } from '@/components/push/patient-picker';
+import { BirthYearFilter } from '@/components/push/birth-year-filter';
+import { IdentImport } from '@/components/push/ident-import';
 import { pushSchema, type PushFormValues, isValidPushPhone, normalizePushPhone } from '@/schemas/push';
 import { useSendPush } from '@/hooks/queries/usePush';
+import { useAllPatients } from '@/hooks/queries/useUsers';
 import { getPushDrafts, savePushDraft, deletePushDraft } from '@/lib/push-drafts';
 import { resolvePhonesToUserIds } from '@/lib/push-resolve';
 import type { PushDraft, PushTarget } from '@/types/push';
 import type { User } from '@/types/user';
 import { cn, formatDateTime, getErrorMessage } from '@/lib/utils';
 
-const TARGET_OPTIONS: { value: PushTarget; title: string; description: string }[] = [
-  { value: 'all', title: 'Все пациенты', description: 'Рассылка по всем пользователям приложения' },
-  { value: 'users', title: 'Выбрать пациентов', description: 'Точечная рассылка по картотеке' },
-  { value: 'phones', title: 'По телефону', description: 'Введите телефоны — найдём пациентов по базе' },
+const TARGET_OPTIONS: {
+  value: PushTarget;
+  title: string;
+  description: string;
+  badge?: string;
+}[] = [
+  {
+    value: 'all',
+    title: 'Все пациенты',
+    description: 'Массовая рассылка по всем пользователям приложения',
+  },
+  {
+    value: 'birth_year',
+    title: 'По году рождения',
+    description: 'Фильтр по году или возрасту (например, ортодонтия)',
+    badge: 'Новинка',
+  },
+  {
+    value: 'ident_import',
+    title: 'Список из IDENT',
+    description: 'Выгрузка из IDENT (вставка списка или файл Excel/CSV)',
+    badge: 'Новинка',
+  },
+  {
+    value: 'users',
+    title: 'Выбрать вручную',
+    description: 'Точечный поиск по картотеке пациентов',
+  },
+  {
+    value: 'phones',
+    title: 'По телефону',
+    description: 'Ручной ввод номеров телефонов',
+  },
 ];
 
 export default function PushPage() {
   const sendPush = useSendPush();
+  const { data: allPatients = [], isLoading: isLoadingAllPatients } = useAllPatients();
+
   const [target, setTarget] = useState<PushTarget>('all');
   const [phones, setPhones] = useState<string[]>([]);
   const [phoneInput, setPhoneInput] = useState('');
@@ -53,11 +97,19 @@ export default function PushPage() {
 
   const formValues = watch();
 
-  const recipientCount = target === 'all' ? undefined : target === 'phones' ? phones.length : patients.length;
+  const recipientCount =
+    target === 'all'
+      ? allPatients.length > 0
+        ? allPatients.length
+        : undefined
+      : target === 'phones'
+        ? phones.length
+        : patients.length;
+
   const canSend =
     target === 'all' ||
     (target === 'phones' && phones.length > 0) ||
-    (target === 'users' && patients.length > 0);
+    ((target === 'users' || target === 'birth_year' || target === 'ident_import') && patients.length > 0);
 
   const addPhone = () => {
     const raw = phoneInput.trim();
@@ -122,17 +174,20 @@ export default function PushPage() {
       image_url: draft.image_url || '',
     });
     setTarget(draft.target);
-    setPhones(draft.phones);
-    // Имена выбранных пациентов восстановить нельзя без запроса — сохраняем только id,
-    // отобразим их как «Пациент #id»
+    setPhones(draft.phones || []);
+    // Сопоставляем сохранённые id с загруженными пациентами
+    const patientMap = new Map(allPatients.map((p) => [p.id, p]));
     setPatients(
-      draft.patient_ids.map((id) => ({
-        id,
-        phone: '',
-        first_name: '',
-        last_name: `Пациент #${id}`,
-        loyalty_balance: 0,
-      })),
+      (draft.patient_ids || []).map(
+        (id) =>
+          patientMap.get(id) || {
+            id,
+            phone: '',
+            first_name: '',
+            last_name: `Пациент #${id}`,
+            loyalty_balance: 0,
+          },
+      ),
     );
     toast.success('Черновик загружен');
   };
@@ -144,13 +199,21 @@ export default function PushPage() {
 
   const onSubmit = async (values: PushFormValues) => {
     if (!canSend) {
-      toast.error(target === 'phones' ? 'Добавьте хотя бы один телефон' : 'Выберите хотя бы одного пациента');
+      if (target === 'phones') {
+        toast.error('Добавьте хотя бы один телефон');
+      } else if (target === 'birth_year') {
+        toast.error('Выберите хотя бы одного пациента по фильтру года рождения');
+      } else if (target === 'ident_import') {
+        toast.error('Загрузите список из IDENT и выберите получателей');
+      } else {
+        toast.error('Выберите хотя бы одного пациента');
+      }
       return;
     }
     try {
-      // Приводим аудиторию к patient_ids (по контракту: send-all или send)
+      // Приводим аудиторию к patient_ids (по контракту бэкенда: send-all или send)
       let patientIds: number[] = [];
-      if (target === 'users') {
+      if (target === 'users' || target === 'birth_year' || target === 'ident_import') {
         patientIds = patients.map((p) => p.id);
       } else if (target === 'phones') {
         const resolved = await resolvePhonesToUserIds(phones);
@@ -176,7 +239,13 @@ export default function PushPage() {
       if (newTaskId) {
         setTaskId(newTaskId);
       } else {
-        toast.success('Рассылка отправлена');
+        const msg =
+          target === 'birth_year'
+            ? `Рассылка отправлена (${patientIds.length} по фильтру года рождения)`
+            : target === 'ident_import'
+              ? `Рассылка отправлена (${patientIds.length} из IDENT)`
+              : 'Рассылка отправлена';
+        toast.success(msg);
       }
       reset({ category: 'system', title: '', body: '', image_url: '' });
       setPhones([]);
@@ -191,7 +260,7 @@ export default function PushPage() {
     <div className="space-y-5">
       <PageHeader
         title="Push-рассылка"
-        subtitle="Индивидуальные и массовые уведомления клиентам"
+        subtitle="Индивидуальные и массовые уведомления клиентам клиники"
       />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -202,31 +271,69 @@ export default function PushPage() {
             {/* Получатели */}
             <div>
               <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Получатели</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 {TARGET_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setTarget(opt.value)}
                     className={cn(
-                      'rounded-lg border p-3 text-left transition-colors',
+                      'relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all',
                       target === opt.value
-                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                        : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800',
+                        ? 'border-brand-500 bg-brand-50/80 shadow-sm dark:border-brand-600 dark:bg-brand-900/30'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/80 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800',
                     )}
                   >
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{opt.title}</p>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
-                    {target === opt.value && recipientCount != null && (
-                      <Badge tone="sky" className="mt-2">
-                        <Users className="h-3 w-3" /> {recipientCount}
-                      </Badge>
-                    )}
+                    <div>
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{opt.title}</p>
+                        {opt.badge && (
+                          <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            {opt.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-1.5">
+                      {target === opt.value && recipientCount != null && (
+                        <Badge tone="sky" className="text-xs">
+                          <Users className="h-3 w-3" /> {recipientCount}
+                        </Badge>
+                      )}
+                      {opt.value === 'all' && allPatients.length > 0 && target === 'all' && (
+                        <Badge tone="slate" className="text-[11px]">
+                          {allPatients.length} в базе
+                        </Badge>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Фильтр по году рождения */}
+            {target === 'birth_year' && (
+              <BirthYearFilter
+                patients={allPatients}
+                selected={patients}
+                onChange={setPatients}
+                isLoading={isLoadingAllPatients}
+              />
+            )}
+
+            {/* Выгрузка из IDENT */}
+            {target === 'ident_import' && (
+              <IdentImport
+                allPatients={allPatients}
+                selected={patients}
+                onChange={setPatients}
+                isLoadingPatients={isLoadingAllPatients}
+              />
+            )}
+
+            {/* По номерам телефонов */}
             {target === 'phones' && (
               <div className="space-y-2 rounded-lg border border-slate-100 p-3 dark:border-slate-800">
                 <div className="flex gap-2">
@@ -276,6 +383,7 @@ export default function PushPage() {
               </div>
             )}
 
+            {/* Выбор из картотеки */}
             {target === 'users' && <PatientPicker selected={patients} onChange={setPatients} />}
 
             <div className="h-px bg-slate-100 dark:bg-slate-800" />
@@ -358,7 +466,11 @@ export default function PushPage() {
                           ? 'всем'
                           : draft.target === 'phones'
                             ? `${draft.phones.length} тел.`
-                            : `${draft.patient_ids.length} пациентов`}
+                            : draft.target === 'birth_year'
+                              ? `${draft.patient_ids.length} по г.р.`
+                              : draft.target === 'ident_import'
+                                ? `${draft.patient_ids.length} из IDENT`
+                                : `${draft.patient_ids.length} пациентов`}
                       </p>
                     </button>
                     <button

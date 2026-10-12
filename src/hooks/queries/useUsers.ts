@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { usersAPI } from '@/lib/api/users';
+import { usersAPI, fetchAllPatients } from '@/lib/api/users';
 import { normalizePage } from '@/lib/api/normalize';
 import type { CreateUserInput, UpdateUserInput, User } from '@/types/user';
 
@@ -24,6 +24,16 @@ export function useUsers(params: UsersQueryParams) {
     placeholderData: (prev) => prev,
   });
 }
+
+/** Загрузка всей базы пациентов с кэшированием (для фильтров рассылки) */
+export function useAllPatients() {
+  return useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => fetchAllPatients(),
+    staleTime: 60_000,
+  });
+}
+
 
 /** Детали пациента по id */
 export function useUser(id: number | null) {
