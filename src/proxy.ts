@@ -54,11 +54,21 @@ function isAdminPayload(payload: Record<string, unknown>): boolean {
 async function decodeToken(token: string): Promise<Record<string, unknown> | null> {
   try {
     if (process.env.JWT_SECRET) {
-      const { payload } = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET));
+      // clockTolerance позволяет пропускать токены, истёкшие не более чем на 10 минут.
+      // Это критично: middleware НЕ должен блокировать навигацию из-за истёкшего токена —
+      // клиентский код (axios interceptor) сам обновит его через BFF /api/session/refresh,
+      // когда API вернёт 401. Если middleware редиректит раньше — refresh никогда не происходит.
+      const { payload } = await jwtVerify(
+        token,
+        new TextEncoder().encode(process.env.JWT_SECRET),
+        { clockTolerance: 600 } // 10 минут допуска
+      );
       return payload as Record<string, unknown>;
     }
+    // Без JWT_SECRET — просто декодируем без проверки подписи и срока (для dev)
     return decodeJwt(token) as Record<string, unknown>;
   } catch {
+    // Токен полностью невалидный (неверная подпись, не JWT) — блокируем
     return null;
   }
 }

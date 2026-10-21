@@ -5,12 +5,15 @@ import { useAuthStore } from '@/stores/useAuthStore';
 
 /**
  * Единый axios-инстанс для админки.
- * baseURL = '/admin-api' → Next.js rewrite проксирует в {ADMIN_API_BASE}/admin/...
+ * baseURL = '/api/proxy' → Route Handler (src/app/api/proxy/[...path]/route.ts)
+ * проксирует в {ADMIN_API_BASE}/admin/...
+ * Используем Route Handler вместо next.config rewrite — он надёжно работает
+ * с внешними HTTPS-эндпоинтами в dev-режиме (rewrite даёт socket hang up).
  * withCredentials: true — куки (httpOnly access_token/refresh_token) шлются автоматически.
  * Authorization: Bearer — токен берётся из Zustand store (in-memory) и подставляется в каждый запрос.
  */
 export const api = axios.create({
-  baseURL: '/admin-api',
+  baseURL: '/api/proxy',
   withCredentials: true,
   timeout: 20000,
   headers: { 'Content-Type': 'application/json' },

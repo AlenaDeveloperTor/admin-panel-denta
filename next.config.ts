@@ -1,26 +1,15 @@
 import type { NextConfig } from 'next';
 
 /**
- * Базовый URL бэкенда (FastAPI).
- * Админ-эндпоинты бэкенда монтируются как `{ADMIN_API_BASE}/admin/...`,
- * поэтому фронтенд ходит в `/admin-api/*`, а rewrite проксирует это в
- * `{ADMIN_API_BASE}/admin/*`. Такой подход:
- *  - убирает CORS (все запросы same-origin);
- *  - позволяет хранить JWT в httpOnly cookies на домене админки;
- *  - соответствует ТЗ: axios-клиент работает с относительными путями.
+ * Проксирование запросов к бэкенду (FastAPI) реализовано через Route Handler:
+ *   src/app/api/proxy/[...path]/route.ts
+ *
+ * Это позволяет надёжно проксировать внешние HTTPS-эндпоинты в dev-режиме
+ * (next.config rewrites давали socket hang up на Windows с HTTPS-бэкендом).
  */
-const adminApiBase = process.env.ADMIN_API_BASE ?? 'http://localhost:8000';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  async rewrites() {
-    return [
-      {
-        source: '/admin-api/:path*',
-        destination: `${adminApiBase}/admin/:path*`,
-      },
-    ];
-  },
   async headers() {
     return [
       {
