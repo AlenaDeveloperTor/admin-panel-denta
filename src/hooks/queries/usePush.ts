@@ -1,18 +1,15 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { pushAPI } from '@/lib/api/push';
 import type { PushHistoryItem, PushSendInput } from '@/types/push';
 
-/** История рассылок */
-export function usePushHistory() {
+/** История рассылок с серверной пагинацией */
+export function usePushHistory(page = 1, limit = 20) {
   return useQuery({
-    queryKey: ['push', 'history'],
-    queryFn: async () => {
-      const res = await pushAPI.history();
-      const data = Array.isArray(res.data) ? res.data : (res.data as { items?: PushHistoryItem[] })?.items ?? [];
-      return data;
-    },
+    queryKey: ['push', 'history', page, limit],
+    queryFn: () => pushAPI.history(page, limit).then((r) => r.data),
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -1,13 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { isAxiosError } from 'axios';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import { useSessions } from '@/hooks/queries/useAuth';
 import { formatDateTime } from '@/lib/utils';
 import type { SessionRecord } from '@/types/auth';
+
+const LIMIT = 20;
 
 const columns: ColumnDef<SessionRecord>[] = [
   {
@@ -55,14 +59,15 @@ const columns: ColumnDef<SessionRecord>[] = [
   },
 ];
 
-/**
- * Журнал входов/выходов сотрудников (обязательное требование ТЗ §1.2).
- * Бэкенд должен реализовать GET /admin/auth/sessions.
- */
+/** Журнал входов/выходов сотрудников (обязательное требование ТЗ §1.2). */
 export function SessionsList() {
-  const { data, isLoading, error } = useSessions();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error } = useSessions(page, LIMIT);
 
-  const notImplemented = isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 405);
+  const hasError = isAxiosError(error);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
 
   return (
     <Card>
@@ -71,19 +76,28 @@ export function SessionsList() {
         subtitle="Кто и когда отвечал за записи, push-уведомления и работу с клиентами"
       />
       <CardContent>
-        {notImplemented ? (
-          <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
-            Бэкенд ещё не реализовал эндпоинт <code className="font-mono">GET /admin/auth/sessions</code>.
-            Журнал входов/выходов появится здесь автоматически после его добавления.
+        {hasError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+            Не удалось загрузить журнал входов. Проверьте подключение или обратитесь к администратору.
           </p>
         ) : (
-          <DataTable
-            columns={columns}
-            data={data ?? []}
-            loading={isLoading}
-            emptyTitle="Записей о входах пока нет"
-            emptyDescription="После первого входа журнал начнёт заполняться"
-          />
+          <>
+            <DataTable
+              columns={columns}
+              data={items}
+              loading={isLoading}
+              emptyTitle="Записей о входах пока нет"
+              emptyDescription="После первого входа журнал начнёт заполняться"
+            />
+            {!isLoading && items.length > 0 && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+                total={total}
+              />
+            )}
+          </>
         )}
       </CardContent>
     </Card>

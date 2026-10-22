@@ -27,18 +27,27 @@ export interface PushHistoryItem {
   body?: string;
   category?: PushCategory;
   image_url?: string;
-  target: 'all' | 'users';
+  target: string;
   patient_ids?: number[];
   /** Всего получателей в рассылке */
   recipients_count: number;
   /** Сколько отправлено в Expo (при активной рассылке) */
   accept_count?: number;
+  accepted_count?: number;
   /** Сколько реально доставлено (после завершения) */
   sent_count?: number;
   status: PushHistoryStatus;
   /** id задачи отправки для опроса прогресса */
   task_id?: string;
   created_at: string;
+}
+
+/** Пагинированный ответ GET /admin/push/history */
+export interface PaginatedPushHistory {
+  items: PushHistoryItem[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 /** Статус задачи отправки (GET /admin/push/task-status/{task_id}) */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authAPI } from '@/lib/api/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
 
@@ -20,10 +20,12 @@ export function useMe() {
 }
 
 /** История входов/выходов (ТЗ §1.2) */
-export function useSessions() {
+export function useSessions(page = 1, limit = 20) {
   return useQuery({
-    queryKey: ['auth', 'sessions'],
-    queryFn: () => authAPI.sessions().then((r) => r.data),
+    queryKey: ['auth', 'sessions', page, limit],
+    queryFn: () =>
+      authAPI.sessions(page, limit).then((r) => r.data),
+    placeholderData: keepPreviousData,
     retry: false,
   });
 }

@@ -21,8 +21,16 @@ export interface SessionRecord {
   id: string;
   user_email: string;
   user_name?: string;
-  action: 'login' | 'logout';
+  action: string;
   ip?: string;
   user_agent?: string;
   created_at: string;
+}
+
+/** Пагинированный ответ GET /admin/auth/sessions */
+export interface PaginatedSessions {
+  items: SessionRecord[];
+  total: number;
+  page: number;
+  limit: number;
 }

@@ -1,4 +1,4 @@
-import type { AdminUser, LoginResponse, SessionRecord } from '@/types/auth';
+import type { AdminUser, LoginResponse, PaginatedSessions, SessionRecord } from '@/types/auth';
 import { api } from './client';
 
 export const authAPI = {
@@ -17,7 +17,8 @@ export const authAPI = {
 
   /**
    * История входов/выходов (обязательное требование ТЗ §1.2).
-   * Бэкенд должен предоставить GET /admin/auth/sessions.
+   * Бэкенд возвращает пагинированный объект: GET /admin/auth/sessions.
    */
-  sessions: () => api.get<SessionRecord[]>('/auth/sessions'),
+  sessions: (page = 1, limit = 20) =>
+    api.get<PaginatedSessions>('/auth/sessions', { params: { page, limit } }),
 };

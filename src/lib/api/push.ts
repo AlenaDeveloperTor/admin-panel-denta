@@ -1,4 +1,4 @@
-import type { PushHistoryItem, PushSendInput, PushTaskStatus } from '@/types/push';
+import type { PaginatedPushHistory, PushHistoryItem, PushSendInput, PushTaskStatus } from '@/types/push';
 import { api } from './client';
 
 /**
@@ -20,8 +20,9 @@ export const pushAPI = {
     patient_ids: number[];
   }) => api.post<{ task_id?: string; success?: boolean }>('/push/send', input),
 
-  /** История рассылок */
-  history: () => api.get<PushHistoryItem[]>('/push/history'),
+  /** История рассылок с пагинацией */
+  history: (page = 1, limit = 20) =>
+    api.get<PaginatedPushHistory>('/push/history', { params: { page, limit } }),
 
   /** Статус задачи отправки */
   taskStatus: (taskId: string) => api.get<PushTaskStatus>(`/push/task-status/${taskId}`),
