@@ -40,6 +40,7 @@ export function useSendPush() {
           title: input.title,
           body: input.body,
           image_url: input.image_url,
+          deep_link: input.deep_link,
         });
       }
       return pushAPI.send({
@@ -47,6 +48,7 @@ export function useSendPush() {
         body: input.body,
         image_url: input.image_url,
         patient_ids: input.patient_ids ?? [],
+        deep_link: input.deep_link,
       });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['push', 'history'] }),

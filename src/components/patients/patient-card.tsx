@@ -59,7 +59,7 @@ export function PatientCard({
       footer={
         user ? (
           <>
-            {phone && (
+            {Boolean(phone || user?.id || userId) && (
               <Button variant="secondary" onClick={() => setPushOpen(true)}>
                 <MessageSquare className="h-4 w-4" /> Push
               </Button>
@@ -211,7 +211,7 @@ export function PatientCard({
         onClose={() => setPushOpen(false)}
         phone={phone}
         patientName={user ? fullName(user) : undefined}
-        userId={user?.id}
+        userId={user?.id ?? (typeof userId === 'number' ? userId : undefined)}
       />
     </Modal>
   );

@@ -25,6 +25,7 @@ import { useSendPush } from '@/hooks/queries/usePush';
 import { buildConfirmationPush } from '@/lib/push-message';
 import { resolvePhoneToUserId } from '@/lib/push-resolve';
 import { appointmentDate, appointmentTime } from '@/types/appointment';
+import type { Appointment } from '@/types/appointment';
 import { fullName, formatPhone } from '@/types/user';
 import { formatDate, formatDateTime, getErrorMessage } from '@/lib/utils';
 
@@ -59,7 +60,6 @@ export function RequestDetail({
   const sendPush = useSendPush();
   const [pushOpen, setPushOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
-  const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
 
   // Состояние формы редактирования заявки
   const [isEditing, setIsEditing] = useState(false);
@@ -75,9 +75,7 @@ export function RequestDetail({
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         setDatetime(d.toISOString().slice(0, 16));
       } else {
-        const d = new Date();
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-        setDatetime(d.toISOString().slice(0, 16));
+        setDatetime('');
       }
       setServiceId(String(request.service?.id ?? request.service_id ?? ''));
       setComment(request.comment ?? '');
@@ -95,7 +93,7 @@ export function RequestDetail({
         comment?: string;
       } = { status };
 
-      if (status === 'confirmed') {
+      if (status === 'confirmed' && isEditing) {
         if (datetime) {
           payload.appointment_datetime = new Date(datetime).toISOString();
         }
@@ -109,26 +107,34 @@ export function RequestDetail({
 
       await updateAppointment.mutateAsync({ id: requestId, data: payload });
 
-      // Автоматическое уведомление клиента о подтверждении
-      if (status === 'confirmed' && notifyOnConfirm) {
-        let targetId = request.patient?.id ?? null;
-        if (!targetId && phone) targetId = await resolvePhoneToUserId(phone);
+      // Если сотрудник сразу назначил дату визита в заявке — отправляем пуш с датой клиенту
+      if (status === 'confirmed' && isEditing && datetime) {
+        const rawPhone = request.patient?.phone ?? (request as { phone?: string })?.phone;
+        let targetId = request.patient?.id
+          ?? request.user_id
+          ?? (request as { patient_id?: number })?.patient_id
+          ?? null;
+        if (!targetId && rawPhone) {
+          targetId = await resolvePhoneToUserId(rawPhone);
+        }
         if (targetId) {
           try {
-            const updatedReq = {
+            const selectedService = services?.find((s) => String(s.id) === String(serviceId));
+            const updatedReq: Appointment = {
               ...request,
-              appointment_datetime: payload.appointment_datetime ?? request.appointment_datetime,
-              service: services?.find((s) => String(s.id) === String(serviceId)) ?? request.service,
+              appointment_datetime: payload.appointment_datetime,
+              service: selectedService ?? request.service,
             };
             const push = buildConfirmationPush(updatedReq);
             await sendPush.mutateAsync({
               target: 'users',
-              patient_ids: [targetId],
+              patient_ids: [Number(targetId)],
               title: push.title,
               body: push.body,
+              deep_link: 'app://appointments',
             });
-          } catch (pushError) {
-            console.warn('Push error:', pushError);
+          } catch (pushErr) {
+            console.warn('[push] Ошибка отправки пуша:', pushErr);
           }
         }
       }
@@ -142,7 +148,7 @@ export function RequestDetail({
   };
 
   const patient = request?.patient;
-  const phone = patient?.phone;
+  const phone = patient?.phone ?? (request as { phone?: string })?.phone;
 
   return (
     <>
@@ -236,7 +242,7 @@ export function RequestDetail({
                   }
                 />
                 <Input
-                  label="Дата и время визита *"
+                  label="Дата и время визита"
                   type="datetime-local"
                   value={datetime}
                   onChange={(e) => setDatetime(e.target.value)}
@@ -271,19 +277,9 @@ export function RequestDetail({
             )}
 
             {request.status === 'created' && (
-              <label className="mt-3 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
-                <input
-                  type="checkbox"
-                  checked={notifyOnConfirm}
-                  onChange={(e) => setNotifyOnConfirm(e.target.checked)}
-                  disabled={!phone}
-                  className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600"
-                />
-                <span>
-                  Автоматически отправить клиенту push о подтверждении
-                  {!phone && <span className="ml-1 text-xs opacity-70">(нет телефона)</span>}
-                </span>
-              </label>
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
+                <span>При подтверждении клиенту автоматически отправляется push-уведомление</span>
+              </div>
             )}
           </div>
         )}

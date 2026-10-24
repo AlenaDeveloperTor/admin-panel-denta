@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { ImageDropzone } from '@/components/ui/image-dropzone';
 import { PushPreview } from '@/components/push/push-preview';
 import { PushHistory } from '@/components/push/push-history';
 import { PushSendProgress } from '@/components/push/push-send-progress';
@@ -31,6 +32,7 @@ import { IdentImport } from '@/components/push/ident-import';
 import { pushSchema, type PushFormValues, isValidPushPhone, normalizePushPhone } from '@/schemas/push';
 import { useSendPush } from '@/hooks/queries/usePush';
 import { useAllPatients } from '@/hooks/queries/useUsers';
+import { uploadImage } from '@/lib/api/upload';
 import { getPushDrafts, savePushDraft, deletePushDraft } from '@/lib/push-drafts';
 import { resolvePhonesToUserIds } from '@/lib/push-resolve';
 import type { PushDraft, PushTarget } from '@/types/push';
@@ -83,11 +85,17 @@ export default function PushPage() {
   const [drafts, setDrafts] = useState<PushDraft[]>(() => getPushDrafts());
   const [taskId, setTaskId] = useState<string | null>(null);
 
+  const [imageMode, setImageMode] = useState<'url' | 'file'>('url');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+  const [uploading, setUploading] = useState(false);
+
   const {
     register,
     handleSubmit,
     reset,
     getValues,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<PushFormValues>({
@@ -96,6 +104,18 @@ export default function PushPage() {
   });
 
   const formValues = watch();
+
+  const switchImageMode = (mode: 'url' | 'file') => {
+    setImageMode(mode);
+    setPendingFile(null);
+    setPreviewUrl(undefined);
+    setValue('image_url', '');
+  };
+
+  const handleFileSelect = (file: File) => {
+    setPendingFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
 
   const recipientCount =
     target === 'all'
@@ -173,6 +193,9 @@ export default function PushPage() {
       body: draft.body,
       image_url: draft.image_url || '',
     });
+    setImageMode('url');
+    setPendingFile(null);
+    setPreviewUrl(undefined);
     setTarget(draft.target);
     setPhones(draft.phones || []);
     // Сопоставляем сохранённые id с загруженными пациентами
@@ -211,6 +234,21 @@ export default function PushPage() {
       return;
     }
     try {
+      let imageUrl = values.image_url?.trim() || undefined;
+
+      if (imageMode === 'file' && pendingFile) {
+        setUploading(true);
+        try {
+          imageUrl = await uploadImage(pendingFile, 'banners');
+        } catch (err) {
+          toast.error(getErrorMessage(err, 'Не удалось загрузить изображение'));
+          setUploading(false);
+          return;
+        } finally {
+          setUploading(false);
+        }
+      }
+
       // Приводим аудиторию к patient_ids (по контракту бэкенда: send-all или send)
       let patientIds: number[] = [];
       if (target === 'users' || target === 'birth_year' || target === 'ident_import') {
@@ -231,7 +269,7 @@ export default function PushPage() {
         category: values.category,
         title: values.title,
         body: values.body,
-        image_url: values.image_url,
+        image_url: imageUrl,
         target: target === 'all' ? 'all' : 'users',
         patient_ids: patientIds,
       });
@@ -248,11 +286,16 @@ export default function PushPage() {
         toast.success(msg);
       }
       reset({ category: 'system', title: '', body: '', image_url: '' });
+      setPendingFile(null);
+      setPreviewUrl(undefined);
+      setImageMode('url');
       setPhones([]);
       setPatients([]);
       setTarget('all');
     } catch (e) {
       toast.error(getErrorMessage(e, 'Не удалось отправить рассылку'));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -411,13 +454,65 @@ export default function PushPage() {
               {...register('body')}
             />
             <div>
-              <Input
-                label="Изображение (URL)"
-                placeholder="https://…/banner.jpg"
-                hint="Опционально, для акций"
-                error={errors.image_url?.message}
-                {...register('image_url')}
-              />
+              <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Изображение <span className="text-xs font-normal text-slate-400">(опционально)</span>
+              </span>
+              <div
+                className="mb-3 flex rounded-lg border border-slate-200 p-1 dark:border-slate-700"
+                style={{ width: 'fit-content' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => switchImageMode('url')}
+                  className={cn(
+                    'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+                    imageMode === 'url'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200',
+                  )}
+                >
+                  По URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchImageMode('file')}
+                  className={cn(
+                    'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+                    imageMode === 'file'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200',
+                  )}
+                >
+                  Загрузить файл
+                </button>
+              </div>
+
+              {imageMode === 'url' ? (
+                <Input
+                  placeholder="https://…/banner.jpg"
+                  hint="Вставьте прямую ссылку на изображение"
+                  error={errors.image_url?.message}
+                  {...register('image_url')}
+                />
+              ) : (
+                <>
+                  <ImageDropzone
+                    value={previewUrl}
+                    uploading={uploading}
+                    onChange={(url) => {
+                      setPreviewUrl(url);
+                      setPendingFile(null);
+                      setValue('image_url', '');
+                    }}
+                    onFile={handleFileSelect}
+                  />
+                  {pendingFile && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Файл будет загружен при отправке рассылки
+                    </p>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
@@ -426,10 +521,14 @@ export default function PushPage() {
               </Button>
               <Button
                 onClick={handleSubmit(onSubmit)}
-                loading={sendPush.isPending}
+                loading={sendPush.isPending || uploading}
                 disabled={!canSend}
               >
-                {sendPush.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {sendPush.isPending || uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
                 Отправить
               </Button>
             </div>
@@ -444,7 +543,7 @@ export default function PushPage() {
               <PushPreview
                 title={formValues.title}
                 body={formValues.body}
-                imageUrl={formValues.image_url}
+                imageUrl={imageMode === 'file' ? (previewUrl || formValues.image_url) : formValues.image_url}
               />
             </CardContent>
           </Card>

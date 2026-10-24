@@ -10,11 +10,13 @@ export function ImageDropzone({
   onChange,
   uploading,
   onFile,
+  className,
 }: {
   value?: string;
   onChange: (url: string) => void;
   uploading?: boolean;
   onFile?: (file: File) => void | Promise<void>;
+  className?: string;
 }) {
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -40,13 +42,14 @@ export function ImageDropzone({
   });
 
   const shown = value || preview;
+  const heightClass = className ?? 'h-40';
 
   return (
     <div className="space-y-2">
       {shown ? (
-        <div className="relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className={cn('relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700', heightClass)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={shown} alt="Превью" className="h-40 w-full object-cover" />
+          <img src={shown} alt="Превью" className="h-full w-full object-cover" />
           <button
             type="button"
             onClick={() => {
@@ -68,18 +71,19 @@ export function ImageDropzone({
         <div
           {...getRootProps()}
           className={cn(
-            'flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors',
+            'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-3 text-center transition-colors',
+            heightClass,
             isDragActive
               ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
               : 'border-slate-300 hover:border-brand-400 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/40',
           )}
         >
           <input {...getInputProps()} />
-          <ImagePlus className="h-7 w-7 text-slate-400" />
+          <ImagePlus className="h-6 w-6 text-slate-400" />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Перетащите изображение или нажмите для выбора
           </p>
-          <p className="text-[11px] text-slate-400">PNG, JPG, WEBP до 5 МБ</p>
+          <p className="text-[10px] text-slate-400">PNG, JPG, WEBP до 5 МБ</p>
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
 'use client';
 
 import { usersAPI } from '@/lib/api/users';
+import { normalizePage } from '@/lib/api/normalize';
+import { normalizePushPhone } from '@/schemas/push';
 import type { User } from '@/types/user';
 
 /**
@@ -11,10 +13,18 @@ import type { User } from '@/types/user';
 
 export async function resolvePhoneToUserId(phone: string): Promise<number | null> {
   try {
-    const res = await usersAPI.list({ search: phone, limit: 20 });
-    const items = (Array.isArray(res.data) ? res.data : (res.data as { items?: User[] })?.items ?? []) as User[];
-    const match = items.find((u) => u.phone === phone);
-    return match?.id ?? null;
+    const rawDigits = phone.replace(/\D/g, '');
+    const normalized = normalizePushPhone(phone);
+    const res = await usersAPI.list({ search: normalized || phone, limit: 20 });
+    const page = normalizePage<User>(res.data, 1, 20);
+    const items = page.items;
+    const match = items.find((u) => {
+      if (!u.phone) return false;
+      if (u.phone === phone || u.phone === normalized) return true;
+      const uDigits = u.phone.replace(/\D/g, '');
+      return uDigits === rawDigits;
+    });
+    return match?.id ? Number(match.id) : null;
   } catch {
     return null;
   }
@@ -31,9 +41,16 @@ export async function resolvePhonesToUserIds(
   await Promise.all(
     phones.map(async (phone) => {
       try {
-        const res = await usersAPI.list({ search: phone, limit: 20 });
-        const items = (Array.isArray(res.data) ? res.data : (res.data as { items?: User[] })?.items ?? []) as User[];
-        const match = items.find((u) => u.phone === phone);
+        const rawDigits = phone.replace(/\D/g, '');
+        const normalized = normalizePushPhone(phone);
+        const res = await usersAPI.list({ search: normalized || phone, limit: 20 });
+        const page = normalizePage<User>(res.data, 1, 20);
+        const items = page.items;
+        const match = items.find((u) => {
+          if (!u.phone) return false;
+          if (u.phone === phone || u.phone === normalized) return true;
+          return u.phone.replace(/\D/g, '') === rawDigits;
+        });
         if (match && !seen.has(match.id)) {
           seen.add(match.id);
           ids.push(match.id);
@@ -49,3 +66,4 @@ export async function resolvePhonesToUserIds(
 
   return { ids, found, missing };
 }
+

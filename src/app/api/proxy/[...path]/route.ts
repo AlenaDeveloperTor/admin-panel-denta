@@ -19,6 +19,10 @@ const FORWARDED_HEADERS = [
   'accept',
   'accept-language',
   'x-request-id',
+  'user-agent',
+  'x-forwarded-for',
+  'x-real-ip',
+  'x-forwarded-proto',
 ];
 
 async function handler(

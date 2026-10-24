@@ -18,6 +18,8 @@ export interface PushSendInput {
   target: PushTarget;
   /** id пациентов для target='users' (персональная рассылка) */
   patient_ids?: number[];
+  /** Глубокая ссылка, например app://appointments */
+  deep_link?: string;
 }
 
 /** Запись в истории рассылок (GET /admin/push/history) */

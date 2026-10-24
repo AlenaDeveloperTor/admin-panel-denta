@@ -59,13 +59,22 @@ export default function AppointmentsPage() {
     setCreateOpen(true);
   };
 
+  const unscheduledCount = useMemo(
+    () => appointments.filter((a) => !a.appointment_datetime && a.status === 'confirmed').length,
+    [appointments],
+  );
+
   const hasActiveFilters = Boolean(filters.status || filters.date_from || filters.date_to);
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Записи"
-        subtitle={`Показано: ${appointments.length}`}
+        subtitle={
+          unscheduledCount > 0
+            ? `Всего записей: ${appointments.length} · Требуют назначения даты: ${unscheduledCount}`
+            : `Показано: ${appointments.length}`
+        }
         actions={
           <>
             <Button variant="outline" onClick={handleExport} disabled={!appointments.length}>
