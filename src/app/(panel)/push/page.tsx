@@ -43,7 +43,6 @@ const TARGET_OPTIONS: {
   value: PushTarget;
   title: string;
   description: string;
-  badge?: string;
 }[] = [
   {
     value: 'all',
@@ -54,13 +53,11 @@ const TARGET_OPTIONS: {
     value: 'birth_year',
     title: 'По году рождения',
     description: 'Фильтр по году или возрасту (например, ортодонтия)',
-    badge: 'Новинка',
   },
   {
     value: 'ident_import',
     title: 'Список из IDENT',
     description: 'Выгрузка из IDENT (вставка списка или файл Excel/CSV)',
-    badge: 'Новинка',
   },
   {
     value: 'users',
@@ -328,14 +325,7 @@ export default function PushPage() {
                     )}
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{opt.title}</p>
-                        {opt.badge && (
-                          <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                            {opt.badge}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{opt.title}</p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
                     </div>
 

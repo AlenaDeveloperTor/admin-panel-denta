@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -63,6 +64,15 @@ async function handler(
     });
   } catch (err) {
     console.error('[proxy] fetch error:', err);
+    Sentry.captureException(err, {
+      tags: {
+        error_type: 'proxy_fetch_error',
+        method: req.method,
+      },
+      extra: {
+        targetUrl: url,
+      },
+    });
     return NextResponse.json(
       { error: 'proxy_error', message: String(err) },
       { status: 502 }

@@ -2,6 +2,7 @@
 
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { captureException } from '@/lib/logger';
 
 /**
  * Единый axios-инстанс для админки.
@@ -63,6 +64,22 @@ api.interceptors.response.use(
     const shouldRetry = status === 401 && original && !original._retry && !isAuthCall;
 
     if (!shouldRetry) {
+      if (!status || status >= 500) {
+        captureException(error, {
+          tags: {
+            error_type: 'admin_api_error',
+            endpoint: url,
+            method: original?.method?.toUpperCase() || 'unknown',
+            status: status ? String(status) : 'NETWORK_ERROR',
+          },
+          extra: {
+            url,
+            status,
+            responseData: error.response?.data,
+            message: error.message,
+          },
+        });
+      }
       return Promise.reject(error);
     }
 

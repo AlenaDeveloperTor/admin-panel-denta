@@ -24,11 +24,11 @@ const STATUS_TONES: Record<PushHistoryStatus, 'slate' | 'emerald' | 'amber' | 'r
 
 export function PushHistory() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = usePushHistory(page, LIMIT);
+  const { data, isLoading, isError } = usePushHistory(page, LIMIT);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / LIMIT);
+  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   return (
     <Card>
@@ -43,6 +43,8 @@ export function PushHistory() {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
+        ) : isError ? (
+          <p className="py-8 text-center text-sm text-rose-500">Не удалось загрузить историю рассылок</p>
         ) : items.length === 0 ? (
           <EmptyState
             title="Рассылок пока не было"

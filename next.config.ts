@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs/config';
 import type { NextConfig } from 'next';
 
 /**
@@ -35,4 +36,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Для GlitchTip отключаем отправку телеметрии в облако Sentry SaaS
+  telemetry: false,
+  silent: true,
+  sourcemaps: {
+    disable: true,
+  },
+});
+

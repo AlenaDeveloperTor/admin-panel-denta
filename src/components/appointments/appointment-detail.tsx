@@ -117,7 +117,6 @@ export function AppointmentDetail({
             });
             toast.success('Запись обновлена, пациенту отправлен push с датой визита');
           } catch (pushErr) {
-            console.warn('[push] Ошибка отправки пуша:', pushErr);
             toast.success('Запись обновлена (пуш отправить не удалось)');
           }
         } else {

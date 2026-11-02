@@ -30,7 +30,7 @@ export default function AppointmentsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createDate, setCreateDate] = useState<string | undefined>();
 
-  const { data, isLoading, isFetching } = useAppointments(filters);
+  const { data, isLoading, isFetching, isError } = useAppointments(filters);
   const { data: clinicSettings } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingsAPI.get().then((response) => response.data),
@@ -145,7 +145,9 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          {view === 'list' ? (
+          {isError ? (
+            <p className="py-8 text-center text-sm text-rose-500">Не удалось загрузить записи. Попробуйте обновить страницу.</p>
+          ) : view === 'list' ? (
             <AppointmentsList
               appointments={appointments}
               loading={isLoading || (isFetching && !data)}

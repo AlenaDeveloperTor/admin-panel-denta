@@ -50,7 +50,7 @@ export function LoyaltyHistory() {
   const debouncedPhone = useDebounce(phone, 500);
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isFetching } = useLoyaltyHistory({
+  const { data, isLoading, isFetching, isError } = useLoyaltyHistory({
     phone: debouncedPhone.trim() || undefined,
     page,
     limit: PAGE_SIZE,
@@ -77,6 +77,8 @@ export function LoyaltyHistory() {
             <Skeleton className="h-14 w-full" />
             <Skeleton className="h-14 w-full" />
           </div>
+        ) : isError ? (
+          <p className="py-8 text-center text-sm text-rose-500">Не удалось загрузить историю операций</p>
         ) : history.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">
             {debouncedPhone.trim()

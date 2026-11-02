@@ -111,8 +111,8 @@ function parseRowColumns(columns: string[]): IdentParsedRecord | null {
 
   if (!foundPhone) return null;
 
-  // Ищем ФИО в соседних колонках (обычно первая колонка или колонка слева/справа от телефона)
-  let name: string | undefined;
+  // Ищем ФИО в колонках (поддерживает как единую колонку ФИО, так и раздельные: Фамилия, Имя, Отчество)
+  const nameParts: string[] = [];
   const notes: string[] = [];
 
   columns.forEach((col, idx) => {
@@ -120,13 +120,17 @@ function parseRowColumns(columns: string[]): IdentParsedRecord | null {
     const trimmed = col.trim();
     if (!trimmed) return;
 
-    // Проверяем, похожа ли колонка на ФИО (буквы, пробелы, дефисы, точки)
-    if (!name && /^[А-Яа-яA-Za-z\s.-]{3,}$/.test(trimmed) && trimmed.length < 100) {
-      name = trimmed;
+    // Проверяем, похожа ли колонка на часть ФИО (буквы, пробелы, дефисы, точки, без цифр)
+    // Обычно первые 1-3 текстовые колонки до даты рождения - это Фамилия, Имя, Отчество
+    const isWord = /^[А-Яа-яЁёA-Za-z\s.-]+$/.test(trimmed) && !/\d/.test(trimmed);
+    if (nameParts.length < 3 && isWord && trimmed.length < 50) {
+      nameParts.push(trimmed);
     } else {
       notes.push(trimmed);
     }
   });
+
+  const name = nameParts.length > 0 ? nameParts.join(' ') : undefined;
 
   return {
     rawPhone: foundPhone.phoneStr,
@@ -194,6 +198,33 @@ export function parseIdentText(text: string): IdentParseResult {
 }
 
 /**
+ * Считывает текстовый/CSV файл, автоматически определяя кодировку (UTF-8 или Windows-1251).
+ * IDENT и Excel в русскоязычной среде часто экспортируют CSV в кодировке Windows-1251.
+ */
+async function readTextFileWithEncoding(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+
+  // Сначала пробуем UTF-8
+  const utf8Decoder = new TextDecoder('utf-8', { fatal: false });
+  const utf8Text = utf8Decoder.decode(buffer);
+
+  // Если в UTF-8 обнаружены символы замены \uFFFD (кракозябры/ромбики), пробуем Windows-1251
+  if (utf8Text.includes('\uFFFD')) {
+    try {
+      const win1251Decoder = new TextDecoder('windows-1251');
+      const win1251Text = win1251Decoder.decode(buffer);
+      if (!win1251Text.includes('\uFFFD')) {
+        return win1251Text;
+      }
+    } catch {
+      // Игнорируем и возвращаем utf8Text
+    }
+  }
+
+  return utf8Text;
+}
+
+/**
  * Парсит файл выгрузки из IDENT (.xlsx, .xls, .csv, .txt).
  */
 export async function parseIdentFile(file: File): Promise<IdentParseResult> {
@@ -242,13 +273,13 @@ export async function parseIdentFile(file: File): Promise<IdentParseResult> {
       };
     } catch {
       // Если readXlsxFile не справился (например старый .xls), пробуем как текстовый файл
-      const text = await file.text();
+      const text = await readTextFileWithEncoding(file);
       return parseIdentText(text);
     }
   }
 
   // Текстовые и CSV файлы
-  const text = await file.text();
+  const text = await readTextFileWithEncoding(file);
   return parseIdentText(text);
 }
 

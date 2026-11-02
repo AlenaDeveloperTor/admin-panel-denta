@@ -52,6 +52,11 @@ function isAdminPayload(payload: Record<string, unknown>): boolean {
 }
 
 async function decodeToken(token: string): Promise<Record<string, unknown> | null> {
+  // В production без JWT_SECRET — все запросы считаем неаутентифицированными
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
   try {
     if (process.env.JWT_SECRET) {
       // clockTolerance позволяет пропускать токены, истёкшие не более чем на 10 минут.
@@ -65,7 +70,7 @@ async function decodeToken(token: string): Promise<Record<string, unknown> | nul
       );
       return payload as Record<string, unknown>;
     }
-    // Без JWT_SECRET — просто декодируем без проверки подписи и срока (для dev)
+    // Без JWT_SECRET — просто декодируем без проверки подписи и срока (только для dev)
     return decodeJwt(token) as Record<string, unknown>;
   } catch {
     // Токен полностью невалидный (неверная подпись, не JWT) — блокируем

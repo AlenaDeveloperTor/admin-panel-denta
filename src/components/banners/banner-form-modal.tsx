@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageDropzone } from '@/components/ui/image-dropzone';
-import { useAuthStore } from '@/stores/useAuthStore';
 import type { Banner, CreateBannerInput } from '@/types/banner';
 
 type ImageMode = 'url' | 'file';
@@ -94,16 +93,7 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
   const submitting = createBanner.isPending || updateBanner.isPending || uploading;
 
   const handleSave = async () => {
-    console.log('[BannerForm] handleSave clicked');
-
-    // Диагностика токена
-    const token = useAuthStore.getState().accessToken;
-    console.log('[BannerForm] accessToken:', token ? `${token.slice(0, 20)}...` : 'НЕТ!');
-
-    if (!validate()) {
-      console.log('[BannerForm] валидация не прошла, errors:', errors);
-      return;
-    }
+    if (!validate()) return;
 
     let imageUrl = form.image_url;
 
@@ -111,7 +101,6 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
       setUploading(true);
       try {
         imageUrl = await uploadImage(pendingFile);
-        console.log('[BannerForm] файл загружен:', imageUrl);
       } catch (error) {
         toast.error(getErrorMessage(error, 'Не удалось загрузить изображение'));
         setUploading(false);
@@ -132,8 +121,6 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
       sort_order: Number(form.sort_order),
     };
 
-    console.log('[BannerForm] отправляем на бэк:', input);
-
     try {
       if (banner) {
         await updateBanner.mutateAsync({ id: banner.id, input });
@@ -144,7 +131,6 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
       }
       onClose();
     } catch (error) {
-      console.error('[BannerForm] ошибка сохранения:', error);
       toast.error(getErrorMessage(error, 'Не удалось сохранить баннер'));
     }
   };

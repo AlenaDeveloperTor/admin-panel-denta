@@ -92,7 +92,6 @@ export function ServiceFormModal({
   const submitting = createService.isPending || updateService.isPending || uploading;
 
   const handleSave = async () => {
-    console.log('[ServiceForm] handleSave clicked');
     if (!validate()) return;
 
     let imageUrl = form.image_url;
@@ -102,7 +101,6 @@ export function ServiceFormModal({
       setUploading(true);
       try {
         imageUrl = await uploadImage(pendingFile, 'services');
-        console.log('[ServiceForm] файл загружен:', imageUrl);
       } catch (error) {
         toast.error(getErrorMessage(error, 'Не удалось загрузить изображение'));
         setUploading(false);
@@ -121,8 +119,6 @@ export function ServiceFormModal({
       is_active: form.is_active,
     };
 
-    console.log('[ServiceForm] отправляем на бэк:', input);
-
     try {
       if (service) {
         await updateService.mutateAsync({ id: service.id, input });
@@ -133,7 +129,6 @@ export function ServiceFormModal({
       }
       onClose();
     } catch (error) {
-      console.error('[ServiceForm] ошибка сохранения:', error);
       toast.error(getErrorMessage(error, 'Не удалось сохранить услугу'));
     }
   };

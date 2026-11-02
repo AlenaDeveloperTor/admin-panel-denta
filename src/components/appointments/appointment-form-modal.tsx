@@ -76,10 +76,8 @@ export function AppointmentFormModal({
         body: msg.body,
         patient_ids: [patient.id],
       });
-      console.log('[push] Уведомление о записи отправлено пациенту', patient.id);
     } catch (err) {
       // Запись уже создана — ошибка пуша не критична
-      console.warn('[push] Не удалось отправить уведомление о записи:', err);
       toast.warning('Запись создана, но уведомление не отправлено', { duration: 4000 });
     }
   }
@@ -110,8 +108,7 @@ export function AppointmentFormModal({
         try {
           await appointmentsAPI.updateStatus(String(createdId), 'confirmed');
         } catch (statusErr) {
-          console.warn('[appointments] Не удалось перевести статус в confirmed:', statusErr);
-        }
+            }
       }
 
       // Строим объект Appointment для генерации текста пуша

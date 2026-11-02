@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Image,
   Inbox,
-  Megaphone,
   Send,
   Settings,
   Star,
@@ -25,7 +24,6 @@ interface NavItem {
   href: string;
   label: string;
   icon: ReactNode;
-  soon?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -34,7 +32,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/requests', label: 'Заявки', icon: <Inbox className="h-5 w-5" /> },
   { href: '/appointments', label: 'Записи', icon: <CalendarDays className="h-5 w-5" /> },
   { href: '/services', label: 'Услуги', icon: <Syringe className="h-5 w-5" /> },
-  { href: '/news', label: 'Акции и новости', icon: <Megaphone className="h-5 w-5" />, soon: true },
   { href: '/loyalty', label: 'Лояльность', icon: <Star className="h-5 w-5" /> },
   { href: '/push', label: 'Push-рассылка', icon: <Send className="h-5 w-5" /> },
   { href: '/banners', label: 'Баннеры', icon: <Image className="h-5 w-5" /> },
@@ -53,7 +50,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
   const pathname = usePathname();
   const unreadRequests = useUnreadRequests();
   const role = useAuthStore((s) => s.user?.role);
-  const canManageStaff = role !== 'manager';
+  const canManageStaff = role === 'admin';
   const canManageSettings = role === 'admin';
 
   return (
@@ -101,11 +98,6 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
               {!collapsed && (
                 <>
                   <span className="flex-1 truncate">{item.label}</span>
-                  {item.soon && (
-                    <span className="rounded-full bg-[#d0c8b5] px-1.5 py-0.5 text-[10px] font-medium text-[#172933]">
-                      скоро
-                    </span>
-                  )}
                   {item.href === '/requests' && unreadRequests > 0 && (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
                       {unreadRequests}
