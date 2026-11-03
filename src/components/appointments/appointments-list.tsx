@@ -11,7 +11,7 @@ import { fullName } from '@/types/user';
 import type { Appointment } from '@/types/appointment';
 import { formatDateTimeInTimeZone } from '@/lib/utils';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 20;
 
 export function AppointmentsList({
   appointments,

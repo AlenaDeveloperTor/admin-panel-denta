@@ -63,8 +63,8 @@ export function Header() {
       <div className="flex items-center gap-2 rounded-full border border-[#d0c8b5] py-1 pl-1 pr-3 dark:border-slate-700">
         {/* Аватар с градиентом */}
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-[#172933]"
-          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+          className="labsmile-gradient flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-[#172933]"
+
         >
           {initials}
         </div>

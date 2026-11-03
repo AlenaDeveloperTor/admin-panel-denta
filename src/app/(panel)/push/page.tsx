@@ -6,13 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import {
   Calendar,
-  FileSpreadsheet,
+
   Loader2,
   Save,
   Send,
-  Sparkles,
+
   Trash2,
-  UserCheck,
+
   Users,
 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';

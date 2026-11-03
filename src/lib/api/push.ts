@@ -9,13 +9,14 @@ import { api } from './client';
  */
 export const pushAPI = {
   /** Массовая рассылка всем пациентам */
-  sendAll: (input: { title: string; body: string; image_url?: string; deep_link?: string }) =>
+  sendAll: (input: { title: string; body: string; category?: PushSendInput['category']; image_url?: string; deep_link?: string }) =>
     api.post<{ task_id?: string; success?: boolean }>('/push/send-all', input),
 
   /** Персональная/выборочная рассылка по id пациентов */
   send: (input: {
     title: string;
     body: string;
+    category?: PushSendInput['category'];
     image_url?: string;
     patient_ids: number[];
     deep_link?: string;

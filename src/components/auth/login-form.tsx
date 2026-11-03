@@ -79,8 +79,8 @@ export function LoginForm() {
       {/* Заголовок */}
       <div className="mb-6 text-center">
         <div
-          className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
-          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+          className="labsmile-gradient mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
+
         >
           🦷
         </div>
@@ -94,7 +94,7 @@ export function LoginForm() {
           <Input
             label="Email"
             type="email"
-            placeholder="admin@labsmile22.ru"
+            placeholder="admin@example.com"
             autoComplete="email"
             error={errors.email?.message}
             {...register('email')}

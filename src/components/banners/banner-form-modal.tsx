@@ -249,7 +249,7 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
         <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
           <div>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Баннер активен</p>
-            <p className="text-xs text-slate-400">Доступен для выбора в push-рассылке</p>
+            <p className="text-xs text-slate-400">Отображается в мобильном приложении</p>
           </div>
           <button
             type="button"

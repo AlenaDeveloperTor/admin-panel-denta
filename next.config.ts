@@ -18,8 +18,20 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
             key: 'Content-Security-Policy',
-            // unsafe-eval нужен для zodResolver и некоторых Next.js-зависимостей
+            // unsafe-eval нужен для zodResolver и динамической компиляции клиентских бандлов Next.js
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
@@ -28,6 +40,9 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "connect-src 'self' https:",
               "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
             ].join('; '),
           },
         ],
@@ -44,4 +59,3 @@ export default withSentryConfig(nextConfig, {
     disable: true,
   },
 });
-

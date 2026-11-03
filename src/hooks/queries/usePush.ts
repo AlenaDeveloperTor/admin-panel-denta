@@ -39,6 +39,7 @@ export function useSendPush() {
         return pushAPI.sendAll({
           title: input.title,
           body: input.body,
+          category: input.category,
           image_url: input.image_url,
           deep_link: input.deep_link,
         });
@@ -46,6 +47,7 @@ export function useSendPush() {
       return pushAPI.send({
         title: input.title,
         body: input.body,
+        category: input.category,
         image_url: input.image_url,
         patient_ids: input.patient_ids ?? [],
         deep_link: input.deep_link,

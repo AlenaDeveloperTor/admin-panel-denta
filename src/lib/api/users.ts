@@ -34,10 +34,15 @@ export async function fetchAllPatients(): Promise<User[]> {
     for (let p = 2; p <= firstPage.totalPages; p++) {
       promises.push(usersAPI.list({ page: p, limit: 100 }));
     }
-    const results = await Promise.all(promises);
+    const results = await Promise.allSettled(promises);
     for (let i = 0; i < results.length; i++) {
-      const pageResult = normalizePage<User>(results[i].data, i + 2, 100);
-      all = all.concat(pageResult.items);
+      const item = results[i];
+      if (item.status === 'fulfilled') {
+        const pageResult = normalizePage<User>(item.value.data, i + 2, 100);
+        all = all.concat(pageResult.items);
+  
+      }
+
     }
   }
 

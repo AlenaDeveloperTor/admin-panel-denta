@@ -59,8 +59,8 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
       <div className={cn('flex h-16 items-center gap-3 border-b border-[#ece7df] px-4 dark:border-slate-800', collapsed && 'justify-center px-2')}>
         {/* Иконка-зуб на градиентной плашке */}
         <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
-          style={{ background: 'linear-gradient(135deg, #aac6ee 0%, #d0c8b5 100%)' }}
+          className="labsmile-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
+
         >
           🦷
         </div>

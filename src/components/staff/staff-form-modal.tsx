@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { getErrorMessage } from '@/lib/utils';
 
-/** Генерация временного пароля */
+/** Генерация временного пароля. Визуально неоднозначные символы (i, l, 1, o, 0, O) намеренно исключены для удобства чтения */
 function generatePassword(len = 8): string {
   const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
   const arr = new Uint32Array(len);
