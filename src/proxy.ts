@@ -24,6 +24,8 @@ const PROTECTED_PREFIXES = [
   '/news',
   '/loyalty',
   '/push',
+  '/banners',
+  '/dashboard',
   '/settings',
   '/staff',
 ];
@@ -59,14 +61,14 @@ async function decodeToken(token: string): Promise<Record<string, unknown> | nul
 
   try {
     if (process.env.JWT_SECRET) {
-      // clockTolerance позволяет пропускать токены, истёкшие не более чем на 10 минут.
+      // clockTolerance: 60 секунд допуска. Не блокирует навигацию при кратковременном рассинхроне часов.
       // Это критично: middleware НЕ должен блокировать навигацию из-за истёкшего токена —
       // клиентский код (axios interceptor) сам обновит его через BFF /api/session/refresh,
       // когда API вернёт 401. Если middleware редиректит раньше — refresh никогда не происходит.
       const { payload } = await jwtVerify(
         token,
         new TextEncoder().encode(process.env.JWT_SECRET),
-        { clockTolerance: 600 } // 10 минут допуска
+        { clockTolerance: 60 } // 60 секунд допуска (снижено с 600 сек по результатам QA-аудита M-3)
       );
       return payload as Record<string, unknown>;
     }

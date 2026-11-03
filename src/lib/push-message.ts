@@ -1,5 +1,6 @@
 import type { Appointment } from '@/types/appointment';
 import { formatDateTimeInTimeZone } from './utils';
+import { DEFAULT_TIMEZONE } from './constants';
 
 /** Готовые тексты push-уведомлений, которые отправляются автоматически */
 export interface GeneratedPush {
@@ -15,7 +16,7 @@ function firstName(user: Appointment['patient']): string | null {
 }
 
 /** Push о создании новой записи администратором */
-export function buildCreationPush(appointment: Appointment, timeZone = 'Europe/Moscow'): GeneratedPush {
+export function buildCreationPush(appointment: Appointment, timeZone = DEFAULT_TIMEZONE): GeneratedPush {
   const name = firstName(appointment.patient);
   const greeting = name ? `${name}, ` : '';
   const service = appointment.service?.name ?? 'запись';
@@ -30,7 +31,7 @@ export function buildCreationPush(appointment: Appointment, timeZone = 'Europe/M
 }
 
 /** Push о подтверждении записи */
-export function buildConfirmationPush(appointment: Appointment, timeZone = 'Europe/Moscow'): GeneratedPush {
+export function buildConfirmationPush(appointment: Appointment, timeZone = DEFAULT_TIMEZONE): GeneratedPush {
   const name = firstName(appointment.patient);
   const greeting = name ? `Уважаемый(ая) ${name}! ` : '';
   const service = appointment.service?.name ?? 'ваша запись';

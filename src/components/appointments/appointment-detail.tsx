@@ -19,6 +19,7 @@ import { PushModal } from '@/components/shared/push-modal';
 import { fullName, formatPhone } from '@/types/user';
 import type { Appointment, AppointmentStatus } from '@/types/appointment';
 import { formatDateTimeInTimeZone, getErrorMessage } from '@/lib/utils';
+import { DEFAULT_TIMEZONE } from '@/lib/constants';
 import { settingsAPI } from '@/lib/api/settings';
 import { useQuery } from '@tanstack/react-query';
 
@@ -106,7 +107,7 @@ export function AppointmentDetail({
             };
             const push = buildConfirmationPush(
               updatedAppointment,
-              clinicSettings?.timezone ?? 'Europe/Moscow',
+              clinicSettings?.timezone ?? DEFAULT_TIMEZONE,
             );
             await sendPush.mutateAsync({
               target: 'users',
@@ -290,7 +291,7 @@ export function AppointmentDetail({
                   appointment.appointment_datetime ? (
                     formatDateTimeInTimeZone(
                       appointment.appointment_datetime,
-                      clinicSettings?.timezone ?? 'Europe/Moscow',
+                      clinicSettings?.timezone ?? DEFAULT_TIMEZONE,
                     )
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-950/60 dark:text-amber-300">

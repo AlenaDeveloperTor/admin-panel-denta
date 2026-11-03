@@ -17,6 +17,7 @@ import { PatientSelect, type PatientOption } from './patient-select';
 import { pushAPI } from '@/lib/api/push';
 import { buildCreationPush } from '@/lib/push-message';
 import { getErrorMessage } from '@/lib/utils';
+import { DEFAULT_TIMEZONE } from '@/lib/constants';
 import { clinicDatetimeToUTC } from '@/lib/utils';
 import { settingsAPI } from '@/lib/api/settings';
 import { useQuery } from '@tanstack/react-query';
@@ -70,7 +71,7 @@ export function AppointmentFormModal({
   async function sendCreationPush(appointment: Appointment) {
     if (!patient?.id) return;
     try {
-      const msg = buildCreationPush(appointment, clinicSettings?.timezone ?? 'Europe/Moscow');
+      const msg = buildCreationPush(appointment, clinicSettings?.timezone ?? DEFAULT_TIMEZONE);
       await pushAPI.send({
         title: msg.title,
         body: msg.body,
@@ -91,7 +92,7 @@ export function AppointmentFormModal({
     try {
       const appointmentDatetime = clinicDatetimeToUTC(
         values.appointment_datetime,
-        clinicSettings?.timezone ?? 'Europe/Moscow',
+        clinicSettings?.timezone ?? DEFAULT_TIMEZONE,
       );
       const res = await createAppointment.mutateAsync({
         user_id: patient!.id,

@@ -31,7 +31,21 @@ async function handler(
   context: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await context.params;
-  const targetUrl = `${ADMIN_API_BASE}/admin/${path.join('/')}`;
+  const subPath = path.join('/');
+  const isPublicAuth = subPath === 'auth/login';
+
+  // BFF auth-check: блокируем неавторизованные запросы к бэкенду (защита от SSRF)
+  const authHeader = req.headers.get('authorization');
+  const cookieAccessToken = req.cookies.get('access_token')?.value;
+
+  if (!isPublicAuth && !authHeader && !cookieAccessToken) {
+    return NextResponse.json(
+      { error: 'unauthorized', message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  const targetUrl = `${ADMIN_API_BASE}/admin/${subPath}`;
 
   // Прокидываем query string если есть
   const { search } = req.nextUrl;
@@ -74,7 +88,7 @@ async function handler(
       },
     });
     return NextResponse.json(
-      { error: 'proxy_error', message: String(err) },
+      { error: 'proxy_error', message: 'Ошибка связи с внутренним сервером' },
       { status: 502 }
     );
   }

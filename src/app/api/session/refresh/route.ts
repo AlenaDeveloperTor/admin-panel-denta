@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isSameOriginRequest } from '@/lib/csrf';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: 'lax' as const,
+  sameSite: 'strict' as const,
   secure: process.env.NODE_ENV === 'production',
   path: '/',
   maxAge: 60 * 60 * 24 * 7, // 7 дней — совпадает с TTL refresh_token на бэкенде
@@ -14,6 +15,9 @@ const COOKIE_OPTIONS = {
  * пробрасывает новые Set-Cookie (или токены из body) обратно в браузер.
  */
 export async function POST(req: NextRequest) {
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ ok: false, error: 'CSRF validation failed' }, { status: 403 });
+  }
   const base = process.env.ADMIN_API_BASE ?? 'http://localhost:8000';
   const cookieHeader = req.headers.get('cookie') ?? '';
   const refreshToken = req.cookies.get('refresh_token')?.value;

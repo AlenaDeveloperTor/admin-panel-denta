@@ -38,6 +38,7 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
  * Promise не обнуляется до тех пор, пока все ожидающие не получили результат.
  */
 let refreshPromise: Promise<string | null> | null = null;
+let isRedirecting = false;
 
 async function refreshSession(): Promise<string | null> {
   const res = await axios.post<{ ok: boolean; access_token?: string }>(
@@ -75,7 +76,7 @@ api.interceptors.response.use(
           extra: {
             url,
             status,
-            responseData: error.response?.data,
+
             message: error.message,
           },
         });
@@ -107,7 +108,8 @@ api.interceptors.response.use(
     } catch {
       // Refresh не удался — сессия невалидна, выкидываем на логин
       useAuthStore.getState().clear();
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && !isRedirecting) {
+        isRedirecting = true;
         window.location.href = '/login?expired=1';
       }
       return Promise.reject(error);

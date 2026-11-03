@@ -51,7 +51,10 @@ export function LoginForm() {
       if (data?.access_token) {
         await fetch('/api/session', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
           body: JSON.stringify({
             access_token: data.access_token,
             refresh_token: data.refresh_token,

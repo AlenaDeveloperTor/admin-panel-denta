@@ -16,6 +16,7 @@ import { useAppointmentFilters } from '@/stores/useAppointmentFilters';
 import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUSES } from '@/types/appointment';
 import type { AppointmentFilters } from '@/types/appointment';
 import { fullName } from '@/types/user';
+import { DEFAULT_TIMEZONE } from '@/lib/constants';
 import { exportToCsv } from '@/lib/csv';
 import { cn } from '@/lib/utils';
 import { settingsAPI } from '@/lib/api/settings';
@@ -36,7 +37,7 @@ export default function AppointmentsPage() {
     queryFn: () => settingsAPI.get().then((response) => response.data),
     retry: false,
   });
-  const clinicTimeZone = clinicSettings?.timezone ?? 'Europe/Moscow';
+  const clinicTimeZone = clinicSettings?.timezone ?? DEFAULT_TIMEZONE;
 
   const appointments = useMemo(() => data?.items ?? [], [data]);
 

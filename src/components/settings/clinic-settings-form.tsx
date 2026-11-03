@@ -15,6 +15,7 @@ import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/utils';
+import { DEFAULT_TIMEZONE } from '@/lib/constants';
 
 export function ClinicSettingsForm() {
   const qc = useQueryClient();
@@ -40,7 +41,7 @@ export function ClinicSettingsForm() {
     defaultValues: {
       name: '',
       phone: '',
-      timezone: 'Europe/Moscow',
+      timezone: DEFAULT_TIMEZONE,
       email: '',
       address: '',
       work_hours: '',
@@ -55,7 +56,7 @@ export function ClinicSettingsForm() {
       reset({
         name: settings.name ?? '',
         phone: settings.phone ?? '',
-        timezone: settings.timezone ?? 'Europe/Moscow',
+        timezone: settings.timezone ?? DEFAULT_TIMEZONE,
         email: settings.email ?? '',
         address: settings.address ?? '',
         work_hours: settings.work_hours ?? '',
