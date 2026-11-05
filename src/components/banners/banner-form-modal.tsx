@@ -246,25 +246,36 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => set('is_active', !form.is_active)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              set('is_active', !form.is_active);
+            }
+          }}
+          className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-4 py-3 select-none transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50"
+        >
           <div>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Баннер активен</p>
             <p className="text-xs text-slate-400">Отображается в мобильном приложении</p>
           </div>
-          <button
-            type="button"
+          <div
             role="switch"
             aria-checked={form.is_active}
-            onClick={() => set('is_active', !form.is_active)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               form.is_active ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-700'
             }`}
           >
-            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-              form.is_active ? 'translate-x-6' : 'translate-x-1'
-            }`} />
-          </button>
-        </label>
+            <span
+              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                form.is_active ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </div>
+        </div>
       </div>
     </Modal>
   );

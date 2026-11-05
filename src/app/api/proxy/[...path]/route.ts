@@ -58,6 +58,13 @@ async function handler(
     if (val) headers[key] = val;
   }
 
+  // Если клиент не передал Authorization заголовок (например, при F5 в браузере,
+  // когда токен в in-memory Zustand-сторе сброшен), но есть сессионная cookie access_token —
+  // подставляем её как Bearer токен для бэкенда
+  if (!headers['authorization'] && cookieAccessToken) {
+    headers['authorization'] = `Bearer ${cookieAccessToken}`;
+  }
+
   // Прокидываем cookies (нужно для httpOnly refresh_token)
   const cookie = req.headers.get('cookie');
   if (cookie) headers['cookie'] = cookie;
