@@ -11,16 +11,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { BannerFormModal } from '@/components/banners/banner-form-modal';
-import { useBanners, useDeleteBanner } from '@/hooks/queries/useBanners';
+import { useBanners, useDeleteBanner, useUpdateBanner } from '@/hooks/queries/useBanners';
 import type { Banner } from '@/types/banner';
 import { getErrorMessage } from '@/lib/utils';
 
 export default function BannersPage() {
   const { data: banners, isLoading } = useBanners();
   const deleteBanner = useDeleteBanner();
+  const updateBanner = useUpdateBanner();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Banner | null>(null);
   const [deleting, setDeleting] = useState<Banner | null>(null);
+
+  const handleToggleActive = async (banner: Banner) => {
+    const nextActive = banner.is_active === false ? true : false;
+    try {
+      await updateBanner.mutateAsync({
+        id: banner.id,
+        input: { is_active: nextActive },
+      });
+      toast.success(nextActive ? 'Баннер активирован' : 'Баннер скрыт');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Не удалось изменить статус'));
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleting) return;
@@ -50,8 +64,29 @@ export default function BannersPage() {
     { accessorKey: 'button_text', header: 'Кнопка', cell: ({ row }) => row.original.button_text || '—' },
     { accessorKey: 'sort_order', header: 'Порядок', cell: ({ row }) => row.original.sort_order ?? 0 },
     {
-      accessorKey: 'is_active', header: 'Статус',
-      cell: ({ row }) => row.original.is_active === false ? <Badge tone="slate">Скрыт</Badge> : <Badge tone="emerald">Активен</Badge>,
+      accessorKey: 'is_active',
+      header: 'Статус',
+      cell: ({ row }) => {
+        const isHidden = row.original.is_active === false;
+        return (
+          <button
+            type="button"
+            onClick={() => handleToggleActive(row.original)}
+            className="group cursor-pointer transition-transform active:scale-95"
+            title="Нажмите, чтобы переключить статус"
+          >
+            {isHidden ? (
+              <Badge tone="slate" className="hover:bg-slate-200 dark:hover:bg-slate-700">
+                Скрыт
+              </Badge>
+            ) : (
+              <Badge tone="emerald" className="hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
+                Активен
+              </Badge>
+            )}
+          </button>
+        );
+      },
     },
     {
       id: 'actions', header: 'Действия',
@@ -60,7 +95,8 @@ export default function BannersPage() {
         <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30" onClick={() => setDeleting(row.original)} aria-label="Удалить"><Trash2 className="h-4 w-4" /></Button>
       </div>,
     },
-  ], []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [updateBanner]);
 
   return <div className="space-y-5">
     <PageHeader title="Баннеры" subtitle={banners ? `Всего баннеров: ${banners.length}` : undefined} actions={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> Добавить баннер</Button>} />

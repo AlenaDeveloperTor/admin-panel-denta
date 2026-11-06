@@ -51,7 +51,7 @@ export function BannerFormModal({ open, onClose, banner }: { open: boolean; onCl
               button_text: banner.button_text ?? '',
               button_url: banner.button_url,
               bg_color: banner.bg_color ?? '#EAF4FF',
-              is_active: banner.is_active ?? true,
+              is_active: banner.is_active !== false,
               sort_order: banner.sort_order ?? 0,
             }
           : EMPTY
