@@ -42,8 +42,8 @@ export function useUpdateStaff() {
 export function useToggleStaffBlock() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, blocked }: { id: number; blocked: boolean }) => {
-      return await staffAPI.update(id, { is_blocked: blocked }).then((r) => r.data);
+    mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
+      return await staffAPI.update(id, { is_active: active }).then((r) => r.data);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['staff'] }),
   });

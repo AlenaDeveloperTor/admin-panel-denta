@@ -72,13 +72,13 @@ export function StaffList() {
           ),
       },
       {
-        accessorKey: 'is_blocked',
+        accessorKey: 'is_active',
         header: 'Статус',
         cell: ({ row }) =>
-          row.original.is_blocked ? (
-            <Badge tone="rose">Заблокирован</Badge>
-          ) : (
+          row.original.is_active ? (
             <Badge tone="emerald">Активен</Badge>
+          ) : (
+            <Badge tone="rose">Заблокирован</Badge>
           ),
       },
       {
@@ -99,20 +99,20 @@ export function StaffList() {
             <Button
               variant="ghost"
               size="icon"
-              className={row.original.is_blocked ? 'text-emerald-600' : 'text-amber-500'}
+              className={!row.original.is_active ? 'text-emerald-600' : 'text-amber-500'}
               onClick={() => {
-                const newBlocked = !row.original.is_blocked;
+                const newActive = !row.original.is_active;
                 toggleBlock.mutate(
-                  { id: row.original.id, blocked: newBlocked },
+                  { id: row.original.id, active: newActive },
                   {
-                    onSuccess: () => toast.success(newBlocked ? 'Сотрудник заблокирован' : 'Сотрудник разблокирован'),
+                    onSuccess: () => toast.success(!newActive ? 'Сотрудник заблокирован' : 'Сотрудник разблокирован'),
                     onError: (e) => toast.error(getErrorMessage(e)),
                   },
                 );
               }}
-              aria-label={row.original.is_blocked ? 'Разблокировать' : 'Заблокировать'}
+              aria-label={!row.original.is_active ? 'Разблокировать' : 'Заблокировать'}
             >
-              {row.original.is_blocked ? <CircleCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+              {!row.original.is_active ? <CircleCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
             </Button>
             <Button
               variant="ghost"

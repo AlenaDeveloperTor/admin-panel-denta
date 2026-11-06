@@ -11,7 +11,7 @@ export interface StaffMember {
   email: string;
   role: AdminRole;
   avatar_url?: string;
-  is_blocked: boolean;
+  is_active: boolean;
   created_at: string;
   last_login_at?: string;
 }

@@ -12,8 +12,8 @@ export interface StaffCreateInput {
   password: string;
 }
 
-/** Поля для обновления (все опциональны; password — только при смене, is_blocked — блокировка) */
-export type StaffUpdateInput = Partial<StaffCreateInput> & { is_blocked?: boolean };
+/** Поля для обновления (все опциональны; password — только при смене, is_active — блокировка) */
+export type StaffUpdateInput = Partial<StaffCreateInput> & { is_active?: boolean };
 
 export const staffAPI = {
   /** Список сотрудников */
