@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-/** Три шага на странице удаления аккаунта */
-type Step = 'phone' | 'code' | 'confirm' | 'done';
+/** Шаги на странице удаления аккаунта */
+type Step = 'phone' | 'code' | 'confirm' | 'done' | 'not_found';
 
 const API = '/api/patient-auth';
 
@@ -33,6 +33,12 @@ export default function DeleteAccountPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data?.detail ?? 'Ошибка при отправке кода. Проверьте номер телефона.');
+        return;
+      }
+      // Если бэкенд просит перейти в бота (need_redirect), значит такого пользователя
+      // в системе нет (он не привязан к боту / удалён). Регистрировать его для удаления бессмысленно.
+      if (data.status === 'need_redirect') {
+        setStep('not_found');
         return;
       }
       setSessionId(data.session_id ?? '');
@@ -280,6 +286,33 @@ export default function DeleteAccountPage() {
               Отмена
             </button>
           </>
+        )}
+
+        {/* ── Шаг: Аккаунт не найден / уже удален ─────────────────── */}
+        {step === 'not_found' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🛡️</div>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#172933', marginBottom: 12 }}>
+              Аккаунт не найден
+            </h2>
+            <p style={{ fontSize: 14, color: '#6B7A8F', lineHeight: 1.6, margin: '0 0 24px' }}>
+              Аккаунт с номером <strong style={{ color: '#172933' }}>{phone}</strong> не зарегистрирован
+              в приложении или уже был удалён.
+              <br />
+              <br />
+              Ваши персональные данные отсутствуют в базе клиники. Дополнительных действий по удалению не требуется.
+            </p>
+            <button
+              onClick={() => {
+                setStep('phone');
+                setError(null);
+                setCode('');
+              }}
+              style={ghostBtnStyle}
+            >
+              Проверить другой номер
+            </button>
+          </div>
         )}
 
         {/* ── Шаг 4: Успех ─────────────────────────────────────────── */}
