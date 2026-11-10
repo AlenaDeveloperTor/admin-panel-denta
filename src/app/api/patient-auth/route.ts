@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
     });
 
     const responseText = await upstream.text();
-    console.log(`[patient-auth] ${method} ${path} → ${upstream.status}:`, responseText);
 
     let data: unknown = null;
     try { data = JSON.parse(responseText); } catch { data = responseText; }
